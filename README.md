@@ -72,7 +72,6 @@ automate-lead-generation/
 │   └── utils/                 # Validation & string parsers
 ├── .env.example               # Frontend environment template
 ├── .gitignore                 # Protected secrets & artifact exclusion rules
-├── n8n-workflow-updated.json  # Exportable n8n workflow pipeline
 ├── package.json               # Node.js dependencies & scripts
 ├── tailwind.config.js         # Design system & color tokens
 └── vite.config.js             # Build & bundler configuration
@@ -146,11 +145,9 @@ API documentation and Swagger UI will be available at `http://127.0.0.1:8000/doc
 ---
 
 ### 4. Workflow Engine (n8n) Setup
-1. Launch or self-host your n8n instance.
-2. Import [`n8n-workflow-updated.json`](./n8n-workflow-updated.json).
-3. Set your Apify API Token in the HTTP Request node.
-4. Configure Supabase database credentials.
-5. Activate the workflow to listen on the webhook route `/webhook/lead-machine`.
+1. Launch or self-host your n8n workflow engine instance.
+2. Configure a webhook node to listen on `/webhook/lead-machine`.
+3. Provide the webhook URL in `backend/.env` under `N8N_WEBHOOK_URL`.
 
 ---
 

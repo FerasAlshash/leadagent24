@@ -64,3 +64,17 @@ desktop.ini
 *.sln
 *.sw?
 *.sublime-workspace
+
+# ==========================================
+# 7. AI Agents & Local Memory
+# ==========================================
+AGENTS.md
+.agents/
+
+# ==========================================
+# 8. Proprietary Automation Workflows (Secret)
+# ==========================================
+*n8n*.json
+*.n8n.json
+n8n-workflow-updated.json
+
