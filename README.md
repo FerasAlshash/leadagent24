@@ -10,6 +10,10 @@
 
 A modern, full-stack B2B SaaS platform that automates the entire outbound sales prospecting cycle: geospatial business discovery, deep contact enrichment (Verified Emails, Phone Numbers, LinkedIn, Instagram, Facebook), AI data cleaning, and personalized cold email outreach.
 
+<p align="center">
+  <img src="Workflow.jpeg" alt="Autonomous Lead Generation Workflow Pipeline" width="100%" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12);" />
+</p>
+
 ---
 
 ## 🌟 Key Features
