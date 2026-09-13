@@ -1,0 +1,6 @@
+{
+  "mode": "test",
+  "test_url": "https://n8n.inexlify.com/webhook-test/lead-machine",
+  "production_url": "https://n8n.inexlify.com/webhook/lead-machine",
+  "active_url": "https://n8n.inexlify.com/webhook-test/lead-machine"
+}
