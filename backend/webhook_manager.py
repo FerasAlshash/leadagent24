@@ -9,6 +9,7 @@ ENV_PATH = Path(__file__).resolve().parent / ".env"
 
 DEFAULT_TEST_URL = "https://n8n.inexlify.com/webhook-test/lead-machine"
 DEFAULT_PROD_URL = "https://n8n.inexlify.com/webhook/lead-machine"
+DEFAULT_DISPATCH_URL = "http://127.0.0.1:8000/api/campaigns/dispatch-email"
 
 def _sync_to_env_file(active_url: str):
     """Safely updates N8N_WEBHOOK_URL in backend/.env if the file exists."""
@@ -32,7 +33,7 @@ def _sync_to_env_file(active_url: str):
 def get_webhook_config() -> Dict[str, Any]:
     """
     Returns the current webhook configuration:
-    mode ('test' | 'production'), test_url, production_url, and active_url.
+    mode ('test' | 'production'), test_url, production_url, active_url, and dispatch_callback_url.
     """
     if SETTINGS_PATH.exists():
         try:
@@ -42,12 +43,14 @@ def get_webhook_config() -> Dict[str, Any]:
                 mode = "test"
             test_url = data.get("test_url", DEFAULT_TEST_URL).strip()
             production_url = data.get("production_url", DEFAULT_PROD_URL).strip()
+            dispatch_callback_url = data.get("dispatch_callback_url", DEFAULT_DISPATCH_URL).strip()
             active_url = production_url if mode == "production" else test_url
             return {
                 "mode": mode,
                 "test_url": test_url,
                 "production_url": production_url,
-                "active_url": active_url
+                "active_url": active_url,
+                "dispatch_callback_url": dispatch_callback_url
             }
         except Exception as e:
             print(f"[Warning] Failed to read webhook settings: {e}")
@@ -65,13 +68,15 @@ def get_webhook_config() -> Dict[str, Any]:
         test_url = env_url.replace("webhook", "webhook-test") if "webhook" in env_url else DEFAULT_TEST_URL
 
     active_url = production_url if mode == "production" else test_url
+    dispatch_callback_url = os.getenv("DISPATCH_CALLBACK_URL", DEFAULT_DISPATCH_URL).strip()
     
     # Save initial file so it is permanently tracked
     config = {
         "mode": mode,
         "test_url": test_url,
         "production_url": production_url,
-        "active_url": active_url
+        "active_url": active_url,
+        "dispatch_callback_url": dispatch_callback_url
     }
     try:
         SETTINGS_PATH.write_text(json.dumps(config, indent=2), encoding="utf-8")
@@ -84,7 +89,11 @@ def get_active_webhook_url() -> str:
     """Returns the currently active webhook URL based on selected mode."""
     return get_webhook_config()["active_url"]
 
-def set_webhook_config(mode: str, test_url: str, production_url: str) -> Dict[str, Any]:
+def get_dispatch_callback_url() -> str:
+    """Returns the callback dispatch URL injected into n8n payload."""
+    return get_webhook_config().get("dispatch_callback_url", DEFAULT_DISPATCH_URL)
+
+def set_webhook_config(mode: str, test_url: str, production_url: str, dispatch_callback_url: str = None) -> Dict[str, Any]:
     """
     Updates the webhook configuration, saves to JSON, updates runtime config,
     and synchronizes to backend/.env.
@@ -102,13 +111,21 @@ def set_webhook_config(mode: str, test_url: str, production_url: str) -> Dict[st
     if not (production_url.startswith("http://") or production_url.startswith("https://")):
         raise ValueError("Production webhook URL must start with http:// or https://")
 
+    if dispatch_callback_url:
+        dispatch_callback_url = dispatch_callback_url.strip()
+        if not (dispatch_callback_url.startswith("http://") or dispatch_callback_url.startswith("https://")):
+            raise ValueError("Dispatch Callback URL must start with http:// or https://")
+    else:
+        dispatch_callback_url = get_dispatch_callback_url()
+
     active_url = production_url if mode == "production" else test_url
 
     config = {
         "mode": mode,
         "test_url": test_url,
         "production_url": production_url,
-        "active_url": active_url
+        "active_url": active_url,
+        "dispatch_callback_url": dispatch_callback_url
     }
 
     # 1. Save JSON
@@ -116,6 +133,7 @@ def set_webhook_config(mode: str, test_url: str, production_url: str) -> Dict[st
 
     # 2. Update environment variable in memory
     os.environ["N8N_WEBHOOK_URL"] = active_url
+    os.environ["DISPATCH_CALLBACK_URL"] = dispatch_callback_url
 
     # 3. Update backend.config module variable if loaded
     try:

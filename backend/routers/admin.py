@@ -67,6 +67,7 @@ class WebhookUpdateRequest(BaseModel):
     mode: str  # "test" or "production"
     test_url: str
     production_url: str
+    dispatch_callback_url: Optional[str] = None
 
 class PingWebhookRequest(BaseModel):
     target_url: Optional[str] = None
@@ -74,7 +75,7 @@ class PingWebhookRequest(BaseModel):
 @router.get("/webhook")
 def get_admin_webhook(admin: Dict[str, Any] = Depends(verify_admin)):
     """
-    Returns current webhook configuration: mode (test vs production), URLs, and active URL.
+    Returns current webhook configuration: mode (test vs production), URLs, active URL, and dispatch callback URL.
     """
     return {
         "success": True,
@@ -84,13 +85,14 @@ def get_admin_webhook(admin: Dict[str, Any] = Depends(verify_admin)):
 @router.post("/webhook")
 def update_admin_webhook(req: WebhookUpdateRequest, admin: Dict[str, Any] = Depends(verify_admin)):
     """
-    Updates the active webhook mode and URLs.
+    Updates the active webhook mode, URLs, and dispatch callback URL.
     """
     try:
         updated = set_webhook_config(
             mode=req.mode,
             test_url=req.test_url,
-            production_url=req.production_url
+            production_url=req.production_url,
+            dispatch_callback_url=req.dispatch_callback_url
         )
         return {
             "success": True,

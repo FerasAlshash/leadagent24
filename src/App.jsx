@@ -12,6 +12,7 @@ const CampaignDetailPage = lazy(() => import('./pages/CampaignDetailPage'));
 const AuditLogPage = lazy(() => import('./pages/AuditLogPage'));
 const AccountSettingsPage = lazy(() => import('./pages/AccountSettingsPage'));
 const AdminConsolePage = lazy(() => import('./pages/AdminConsolePage'));
+const DocumentationPage = lazy(() => import('./pages/DocumentationPage'));
 
 // 2. Modals & Workspace Components
 import Sidebar from './components/Sidebar';
@@ -709,6 +710,10 @@ export default function App() {
                     loading={loadingData}
                   />
                 } 
+              />
+              <Route 
+                path="/docs" 
+                element={<DocumentationPage />} 
               />
               <Route 
                 path="/settings" 

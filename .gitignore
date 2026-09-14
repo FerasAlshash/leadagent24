@@ -8,6 +8,7 @@
 backend/.env
 backend/.env.*
 !backend/.env.example
+backend/email_settings.json
 
 # ==========================================
 # 2. Node & Frontend (React / Vite)

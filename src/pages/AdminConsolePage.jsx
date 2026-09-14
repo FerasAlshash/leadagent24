@@ -42,6 +42,7 @@ export default function AdminConsolePage({
   const [webhookMode, setWebhookMode] = useState('test'); // 'test' | 'production'
   const [testUrl, setTestUrl] = useState('https://n8n.inexlify.com/webhook-test/lead-machine');
   const [prodUrl, setProdUrl] = useState('https://n8n.inexlify.com/webhook/lead-machine');
+  const [dispatchCallbackUrl, setDispatchCallbackUrl] = useState('http://127.0.0.1:8000/api/campaigns/dispatch-email');
   const [savingWebhook, setSavingWebhook] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
@@ -74,6 +75,7 @@ export default function AdminConsolePage({
         setWebhookMode(result.webhook.mode || 'test');
         if (result.webhook.test_url) setTestUrl(result.webhook.test_url);
         if (result.webhook.production_url) setProdUrl(result.webhook.production_url);
+        if (result.webhook.dispatch_callback_url) setDispatchCallbackUrl(result.webhook.dispatch_callback_url);
       }
     } catch (err) {
       setError(err.message);
@@ -105,7 +107,8 @@ export default function AdminConsolePage({
         body: JSON.stringify({
           mode: targetMode,
           test_url: testUrl.trim(),
-          production_url: prodUrl.trim()
+          production_url: prodUrl.trim(),
+          dispatch_callback_url: dispatchCallbackUrl.trim()
         })
       });
 
@@ -531,6 +534,35 @@ export default function AdminConsolePage({
                 <span>Ping Prod URL</span>
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* 3. Dynamic Backend Dispatch Callback URL Card */}
+        <div className="p-4 sm:p-5 rounded-2xl border border-purple-200 bg-purple-50/20 space-y-2.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <label htmlFor="dispatch-callback-url-input" className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <Send className="w-3.5 h-3.5 text-purple-600" />
+                <span>Backend Dispatch Callback URL (Dynamic n8n Return Address)</span>
+              </label>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                This endpoint is injected automatically into every n8n payload. When n8n generates each AI email, its HTTP Request node calls this URL to dispatch via the user's active provider (Resend, Brevo, SendGrid, etc.). When deploying to VPS, simply change this to your production API domain.
+              </p>
+            </div>
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-100 text-purple-800 shrink-0 self-start sm:self-auto">
+              Auto-injected into n8n
+            </span>
+          </div>
+
+          <div className="relative mt-1">
+            <input
+              id="dispatch-callback-url-input"
+              type="url"
+              value={dispatchCallbackUrl}
+              onChange={(e) => setDispatchCallbackUrl(e.target.value)}
+              placeholder="http://127.0.0.1:8000/api/campaigns/dispatch-email"
+              className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl border border-purple-200 bg-white text-slate-800 focus:outline-hidden focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 font-medium"
+            />
           </div>
         </div>
 

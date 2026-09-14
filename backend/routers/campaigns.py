@@ -6,6 +6,7 @@ import json
 from datetime import datetime
 from backend.config import N8N_WEBHOOK_URL
 from backend.database import supabase_admin, supabase_client
+from backend.services.email_dispatcher import dispatch_outreach_email, EmailDispatchError
 
 router = APIRouter(prefix="/api/campaigns", tags=["Campaigns"])
 
@@ -253,11 +254,13 @@ async def launch_campaign(req: CampaignLaunchRequest, authorization: Optional[st
             print(f"[Warning] Failed to insert into campaigns table: {e}")
 
     # 2. Prepare payload for n8n
-    from backend.webhook_manager import get_active_webhook_url
+    from backend.webhook_manager import get_active_webhook_url, get_dispatch_callback_url
     target_webhook = req.webhook_url or get_active_webhook_url()
+    dispatch_url = get_dispatch_callback_url()
     n8n_payload = {
         "user_id": user_id,
         "campaign_id": campaign_id,
+        "dispatch_url": dispatch_url,
         "Business Type": req.business_type,
         "Location": req.location,
         "Lead Number": req.lead_number,
@@ -341,3 +344,163 @@ def delete_campaign(campaign_id: str, authorization: Optional[str] = Header(None
         return {"success": True, "message": "Campaign and associated leads deleted successfully."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+class DispatchEmailRequest(BaseModel):
+    campaign_id: Optional[str] = None
+    to_email: str
+    subject: str
+    body: str
+    recipient_company: Optional[str] = None
+    lead_id: Optional[str] = None
+    # Optional direct overrides for testing / standalone calls
+    provider: Optional[str] = None
+    api_key: Optional[str] = None
+    sender_email: Optional[str] = None
+    sender_name: Optional[str] = None
+    smtp_host: Optional[str] = None
+    smtp_port: Optional[int] = 587
+    smtp_user: Optional[str] = None
+    smtp_pass: Optional[str] = None
+
+@router.post("/dispatch-email")
+async def dispatch_campaign_email(payload: DispatchEmailRequest):
+    """
+    Called by n8n HTTP Request node to dispatch an AI-generated cold outreach email.
+    Automatically resolves the campaign owner's custom email provider (Brevo/SendGrid/Resend/SMTP),
+    dispatches the email, and updates lead tracking records in Supabase.
+    """
+    provider = payload.provider
+    credentials: Dict[str, Any] = {}
+
+    # 1. Direct credentials override (for test workflows or direct calls)
+    if payload.provider and payload.sender_email:
+        provider = payload.provider
+        credentials = {
+            "api_key": payload.api_key or "",
+            "sender_email": payload.sender_email,
+            "sender_name": payload.sender_name or "Prospecting Team",
+            "smtp_host": payload.smtp_host,
+            "smtp_port": payload.smtp_port or 587,
+            "smtp_user": payload.smtp_user,
+            "smtp_pass": payload.smtp_pass
+        }
+    
+    # 2. Database lookup via campaign_id
+    elif payload.campaign_id:
+        try:
+            camp_res = supabase_admin.table("campaigns").select("id, user_id, title").eq("id", payload.campaign_id).execute()
+            if camp_res.data:
+                user_id = camp_res.data[0].get("user_id")
+                integ_res = supabase_admin.table("user_email_integrations").select("*").eq("user_id", user_id).execute()
+                if integ_res.data:
+                    integ = integ_res.data[0]
+                    provider = integ.get("provider", "brevo")
+                    credentials = {
+                        "api_key": integ.get("api_key") or "",
+                        "sender_email": integ.get("sender_email") or "",
+                        "sender_name": integ.get("sender_name") or "Marketing Team",
+                        "smtp_host": integ.get("smtp_host"),
+                        "smtp_port": integ.get("smtp_port") or 587,
+                        "smtp_user": integ.get("smtp_user"),
+                        "smtp_pass": integ.get("smtp_pass")
+                    }
+        except Exception as err:
+            print(f"[Dispatch] Warning during campaign lookup: {err}")
+
+    # 3. Fallback: Lookup any configured integration if not yet assigned
+    if not credentials or not credentials.get("sender_email"):
+        try:
+            fallback_res = supabase_admin.table("user_email_integrations").select("*").limit(1).execute()
+            if fallback_res.data:
+                integ = fallback_res.data[0]
+                provider = integ.get("provider", "brevo")
+                credentials = {
+                    "api_key": integ.get("api_key") or "",
+                    "sender_email": integ.get("sender_email") or "",
+                    "sender_name": integ.get("sender_name") or "Marketing Team",
+                    "smtp_host": integ.get("smtp_host"),
+                    "smtp_port": integ.get("smtp_port") or 587,
+                    "smtp_user": integ.get("smtp_user"),
+                    "smtp_pass": integ.get("smtp_pass")
+                }
+        except Exception:
+            pass
+
+    # 4. Fallback to local settings file if Supabase table is not yet migrated
+    if not credentials or not credentials.get("sender_email"):
+        from backend.routers.email_integrations import read_local_email_settings
+        local_integ = read_local_email_settings()
+        if local_integ:
+            provider = local_integ.get("provider", "brevo")
+            credentials = {
+                "api_key": local_integ.get("api_key") or "",
+                "sender_email": local_integ.get("sender_email") or "",
+                "sender_name": local_integ.get("sender_name") or "Marketing Team",
+                "smtp_host": local_integ.get("smtp_host"),
+                "smtp_port": local_integ.get("smtp_port") or 587,
+                "smtp_user": local_integ.get("smtp_user"),
+                "smtp_pass": local_integ.get("smtp_pass")
+            }
+
+    # Check if credentials are still missing
+    if not credentials or not credentials.get("sender_email"):
+        raise HTTPException(
+            status_code=400,
+            detail="No email provider configured. Please connect Brevo, SendGrid, or SMTP in Account Settings."
+        )
+
+    # 4. Dispatch Email via Provider
+    now_iso = datetime.now().isoformat()
+    try:
+        dispatch_res = await dispatch_outreach_email(
+            provider=provider or "brevo",
+            credentials=credentials,
+            to_email=payload.to_email,
+            subject=payload.subject,
+            body=payload.body
+        )
+    except EmailDispatchError as exc:
+        # Log failure to lead record if possible
+        if payload.campaign_id and payload.to_email:
+            try:
+                supabase_admin.table("leads").update({
+                    "Cold_Mail_Status": "Failed",
+                    "email_subject": payload.subject,
+                    "email_body": payload.body
+                }).eq("campaign_id", payload.campaign_id).eq("Email_Address", payload.to_email).execute()
+            except Exception:
+                pass
+
+        return {
+            "success": False,
+            "status": "Failed",
+            "error": exc.message,
+            "provider": exc.provider,
+            "status_code": exc.status_code or 400
+        }
+
+    # 5. Update Lead in Database
+    if payload.campaign_id and payload.to_email:
+        try:
+            update_data = {
+                "Cold_Mail_Status": "Sent",
+                "SEND_Time": now_iso,
+                "email_subject": payload.subject,
+                "email_body": payload.body
+            }
+            if payload.lead_id:
+                supabase_admin.table("leads").update(update_data).eq("id", payload.lead_id).execute()
+            else:
+                supabase_admin.table("leads").update(update_data).eq("campaign_id", payload.campaign_id).eq("Email_Address", payload.to_email).execute()
+        except Exception as update_err:
+            print(f"[Dispatch] Warning updating lead status: {update_err}")
+
+    return {
+        "success": True,
+        "status": "Sent",
+        "provider": provider,
+        "recipient": payload.to_email,
+        "message_id": dispatch_res.get("message_id"),
+        "timestamp": now_iso
+    }
+

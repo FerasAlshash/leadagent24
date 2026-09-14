@@ -8,7 +8,8 @@ import {
   ShieldCheck,
   Activity,
   History,
-  LogOut
+  LogOut,
+  BookOpen
 } from 'lucide-react';
 
 export default function Sidebar({ 
@@ -47,6 +48,16 @@ export default function Sidebar({
       icon: History,
       badge: 'Feed',
       isActive: (pathname) => pathname.startsWith('/audit')
+    },
+    {
+      id: 'docs',
+      path: '/docs',
+      label: 'Integration Guides',
+      description: 'BYOK setup, APIs & troubleshooting',
+      icon: BookOpen,
+      badge: 'Docs',
+      badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+      isActive: (pathname) => pathname.startsWith('/docs')
     },
     {
       id: 'settings',
