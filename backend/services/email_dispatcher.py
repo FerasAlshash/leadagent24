@@ -81,6 +81,105 @@ async def verify_brevo_sender_authorization(client: httpx.AsyncClient, headers: 
     )
 
 
+async def verify_resend_sender_authorization(client: httpx.AsyncClient, headers: Dict[str, str], sender_email: str):
+    """
+    Strictly verifies that sender_email domain matches an active, verified domain in Resend.
+    Prevents silent spoofing, DMARC rejection, and account suspension.
+    """
+    clean_sender = sender_email.lower().strip()
+    domain = clean_sender.split("@")[-1] if "@" in clean_sender else ""
+    
+    # 1. Fetch domains from Resend
+    res = await client.get("https://api.resend.com/domains", headers=headers)
+    if res.status_code != 200:
+        err_msg = "Invalid Resend API Key"
+        try:
+            err_msg = res.json().get("message") or err_msg
+        except Exception:
+            pass
+        raise EmailDispatchError(
+            f"Resend authentication failed: {err_msg}",
+            provider="resend",
+            status_code=res.status_code
+        )
+
+    domains_data = res.json().get("data", [])
+    verified_domains = {
+        d.get("name", "").lower().strip()
+        for d in domains_data
+        if d.get("status") == "verified" and d.get("name")
+    }
+
+    # Resend also permits their test domain for testing
+    if domain == "resend.dev":
+        return
+
+    if domain not in verified_domains:
+        domains_list = ", ".join(list(verified_domains)) or "none configured yet"
+        raise EmailDispatchError(
+            f"Sender domain '@{domain}' is not verified in your Resend account. "
+            f"Active verified domains in your Resend account: {domains_list}. "
+            f"Please verify '{domain}' in your Resend dashboard under Domains before sending outreach.",
+            provider="resend",
+            status_code=400
+        )
+
+
+async def verify_sendgrid_sender_authorization(client: httpx.AsyncClient, headers: Dict[str, str], sender_email: str):
+    """
+    Strictly verifies that sender_email matches a verified single sender or an authenticated domain in SendGrid.
+    """
+    clean_sender = sender_email.lower().strip()
+    domain = clean_sender.split("@")[-1] if "@" in clean_sender else ""
+
+    # 1. Check verified senders
+    res = await client.get("https://api.sendgrid.com/v3/verified_senders", headers=headers)
+    if res.status_code != 200:
+        err_msg = "Invalid SendGrid API Key"
+        try:
+            err_msg = res.json().get("errors", [{}])[0].get("message") or err_msg
+        except Exception:
+            pass
+        raise EmailDispatchError(
+            f"SendGrid authentication failed: {err_msg}",
+            provider="sendgrid",
+            status_code=res.status_code
+        )
+
+    senders_data = res.json().get("results", [])
+    verified_senders = {
+        s.get("from_email", "").lower().strip()
+        for s in senders_data
+        if s.get("verified") and s.get("from_email")
+    }
+
+    if clean_sender in verified_senders:
+        return
+
+    # 2. Check authenticated domains
+    try:
+        dom_res = await client.get("https://api.sendgrid.com/v3/whitelabel/domains", headers=headers)
+        if dom_res.status_code == 200:
+            auth_domains = {
+                d.get("domain", "").lower().strip()
+                for d in dom_res.json()
+                if d.get("valid") and d.get("domain")
+            }
+            if domain in auth_domains:
+                return
+    except Exception:
+        pass
+
+    sample = ", ".join(list(verified_senders)[:3]) or "none configured"
+    raise EmailDispatchError(
+        f"Sender Email '{sender_email}' is not a verified sender in your SendGrid account. "
+        f"Your verified SendGrid senders: {sample}. "
+        f"Please verify '{sender_email}' in SendGrid under Settings > Sender Authentication.",
+        provider="sendgrid",
+        status_code=400
+    )
+
+
 async def send_via_brevo(
     api_key: str,
     sender_name: str,
@@ -160,8 +259,13 @@ async def send_via_sendgrid(
     }
 
     async with httpx.AsyncClient(timeout=15.0) as client:
+        # 1. Pre-flight verification: ensure sender is verified in SendGrid
+        await verify_sendgrid_sender_authorization(client, headers, sender_email)
+
         try:
             response = await client.post(url, headers=headers, json=payload)
+        except EmailDispatchError:
+            raise
         except Exception as exc:
             raise EmailDispatchError(f"Network error connecting to SendGrid: {str(exc)}", provider="sendgrid")
 
@@ -213,8 +317,13 @@ async def send_via_resend(
     }
 
     async with httpx.AsyncClient(timeout=15.0) as client:
+        # 1. Pre-flight verification: ensure domain is verified in Resend
+        await verify_resend_sender_authorization(client, headers, sender_email)
+
         try:
             response = await client.post(url, headers=headers, json=payload)
+        except EmailDispatchError:
+            raise
         except Exception as exc:
             raise EmailDispatchError(f"Network error connecting to Resend: {str(exc)}", provider="resend")
 

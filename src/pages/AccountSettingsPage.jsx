@@ -17,15 +17,23 @@ import {
   Check,
   ExternalLink,
   BookOpen,
-  ChevronRight
+  ChevronRight,
+  Plus,
+  Trash2,
+  Edit2,
+  Key,
+  RefreshCw,
+  X
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { useConfirm } from '../context/ConfirmContext';
 import { checkPasswordStrength } from '../utils/passwordValidator';
 import { diagnoseEmailError } from '../utils/emailDiagnostics';
 
 export default function AccountSettingsPage({ leadsCount = 0, campaignsCount = 0 }) {
-  const { user } = useAuth();
+  const { user, profile, loading: authLoading, updatePassword, signOut } = useAuth();
+  const { confirm } = useConfirm();
   const navigate = useNavigate();
 
   const isAdmin = (user?.email || '').toLowerCase() === 'ferasalshash@gmail.com';
@@ -40,128 +48,194 @@ export default function AccountSettingsPage({ leadsCount = 0, campaignsCount = 0
 
   const passwordStrength = checkPasswordStrength(newPassword);
 
-  // Outbound Email Provider (BYOK) State
-  const [savedIntegration, setSavedIntegration] = useState(null);
-  const [provider, setProvider] = useState('brevo'); // 'brevo', 'sendgrid', 'resend', 'smtp'
+  // =========================================================================
+  // CREDENTIALS VAULT STATE
+  // =========================================================================
+  const [credentialsList, setCredentialsList] = useState([]);
+  const [loadingCredentials, setLoadingCredentials] = useState(true);
+  const [isCredModalOpen, setIsCredModalOpen] = useState(false);
+  const [editingCredId, setEditingCredId] = useState(null);
+  const [savingCred, setSavingCred] = useState(false);
+  const [credStatus, setCredStatus] = useState(null);
 
-  const [providerConfigs, setProviderConfigs] = useState({
-    brevo: {
+  const [credForm, setCredForm] = useState({
+    name: '',
+    provider: 'resend',
+    apiKey: '',
+    showApiKey: false,
+    smtpHost: '',
+    smtpPort: 587,
+    smtpUser: '',
+    smtpPass: '',
+    showSmtpPass: false
+  });
+
+  // Test Email state
+  const [testModalCred, setTestModalCred] = useState(null);
+  const [testRecipient, setTestRecipient] = useState(user?.email || '');
+  const [testSenderEmail, setTestSenderEmail] = useState('');
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+  const [showRawError, setShowRawError] = useState(false);
+
+  // Guide state
+  const [guideProvider, setGuideProvider] = useState('resend');
+
+  const fetchCredentials = async () => {
+    setLoadingCredentials(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      const res = await fetch('http://127.0.0.1:8000/api/email-integrations/credentials', {
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCredentialsList(data.credentials || []);
+      }
+    } catch (err) {
+      console.warn('Could not fetch credentials:', err);
+    } finally {
+      setLoadingCredentials(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCredentials();
+  }, [user]);
+
+  const handleOpenAddCredModal = () => {
+    setEditingCredId(null);
+    setCredForm({
+      name: '',
+      provider: 'resend',
       apiKey: '',
       showApiKey: false,
-      senderEmail: '',
-      senderName: ''
-    },
-    sendgrid: {
-      apiKey: '',
-      showApiKey: false,
-      senderEmail: '',
-      senderName: ''
-    },
-    resend: {
-      apiKey: '',
-      showApiKey: false,
-      senderEmail: '',
-      senderName: ''
-    },
-    smtp: {
       smtpHost: '',
       smtpPort: 587,
       smtpUser: '',
       smtpPass: '',
-      showSmtpPass: false,
-      senderEmail: '',
-      senderName: ''
-    }
-  });
-
-  const currentConfig = providerConfigs[provider] || {};
-  const senderEmail = currentConfig.senderEmail || '';
-  const senderName = currentConfig.senderName || '';
-  const apiKey = currentConfig.apiKey || '';
-
-  const updateCurrentConfig = (field, value) => {
-    setProviderConfigs(prev => ({
-      ...prev,
-      [provider]: {
-        ...prev[provider],
-        [field]: value
-      }
-    }));
+      showSmtpPass: false
+    });
+    setCredStatus(null);
+    setIsCredModalOpen(true);
   };
 
-  const [testRecipient, setTestRecipient] = useState(user?.email || '');
-  const [testingConnection, setTestingConnection] = useState(false);
-  const [testResult, setTestResult] = useState(null);
-  const [savingIntegration, setSavingIntegration] = useState(false);
-  const [saveStatus, setSaveStatus] = useState(null);
-  const [isConfigured, setIsConfigured] = useState(false);
-  const [showRawError, setShowRawError] = useState(false);
+  const handleOpenEditCredModal = (cred) => {
+    setEditingCredId(cred.id);
+    setCredForm({
+      name: cred.name || '',
+      provider: cred.provider || 'resend',
+      apiKey: cred.api_key_masked || '',
+      showApiKey: false,
+      smtpHost: cred.smtp_host || '',
+      smtpPort: cred.smtp_port || 587,
+      smtpUser: cred.smtp_user || '',
+      smtpPass: '',
+      showSmtpPass: false
+    });
+    setCredStatus(null);
+    setIsCredModalOpen(true);
+  };
 
-  useEffect(() => {
-    async function loadIntegration() {
-      if (!user) return;
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
-        if (!token) return;
-
-        const res = await fetch('http://127.0.0.1:8000/api/email-integrations/me', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.configured && data.integration) {
-            setIsConfigured(true);
-            setSavedIntegration(data.integration);
-            const activeProv = data.integration.provider || 'brevo';
-            setProvider(activeProv);
-            setProviderConfigs(prev => ({
-              ...prev,
-              [activeProv]: {
-                ...prev[activeProv],
-                apiKey: data.integration.api_key_masked || '',
-                senderEmail: data.integration.sender_email || '',
-                senderName: data.integration.sender_name || '',
-                smtpHost: data.integration.smtp_host || '',
-                smtpPort: data.integration.smtp_port || 587,
-                smtpUser: data.integration.smtp_user || '',
-                smtpPass: ''
-              }
-            }));
-          }
-        }
-      } catch (err) {
-        console.warn('Could not load email integration:', err);
-      }
+  const handleSaveCredential = async (e) => {
+    e.preventDefault();
+    if (!credForm.name.trim()) {
+      setCredStatus({ type: 'error', message: 'Please provide a name for this credential.' });
+      return;
     }
-    loadIntegration();
-  }, [user]);
+    setSavingCred(true);
+    setCredStatus(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
 
-  const handleProviderSwitch = (newProvider) => {
-    setProvider(newProvider);
+      const payload = {
+        id: editingCredId || undefined,
+        name: credForm.name.trim(),
+        provider: credForm.provider,
+        api_key: credForm.apiKey ? credForm.apiKey.trim() : undefined,
+        smtp_host: credForm.smtpHost ? credForm.smtpHost.trim() : undefined,
+        smtp_port: Number(credForm.smtpPort) || 587,
+        smtp_user: credForm.smtpUser ? credForm.smtpUser.trim() : undefined,
+        smtp_pass: credForm.smtpPass ? credForm.smtpPass : undefined
+      };
+
+      const res = await fetch('http://127.0.0.1:8000/api/email-integrations/credentials', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || data.error || 'Failed to save credential.');
+      }
+
+      await fetchCredentials();
+      setIsCredModalOpen(false);
+    } catch (err) {
+      setCredStatus({ type: 'error', message: err.message });
+    } finally {
+      setSavingCred(false);
+    }
+  };
+
+  const handleDeleteCredential = async (credId, credName) => {
+    const ok = await confirm({
+      title: 'Delete Credential',
+      message: `Are you sure you want to delete credential "${credName}" from your Vault? Any campaigns currently bound to it will need to be reconfigured.`,
+      confirmText: 'Delete Credential',
+      isDanger: true
+    });
+    if (!ok) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      const res = await fetch(`http://127.0.0.1:8000/api/email-integrations/credentials/${credId}`, {
+        method: 'DELETE',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
+      if (res.ok) {
+        setCredentialsList(prev => prev.filter(c => c.id !== credId));
+      }
+    } catch (err) {
+      alert('Failed to delete credential: ' + err.message);
+    }
+  };
+
+  const handleOpenTestModal = (cred) => {
+    setTestModalCred(cred);
+    setTestSenderEmail('');
     setTestResult(null);
-    setSaveStatus(null);
     setShowRawError(false);
   };
 
-  const handleTestEmail = async () => {
+  const handleRunTestDispatch = async () => {
+    if (!testSenderEmail.trim()) {
+      alert('Please enter an authorized Sender Email to test dispatch.');
+      return;
+    }
     setTestingConnection(true);
     setTestResult(null);
     try {
-      const payload = {
-        provider,
-        api_key: currentConfig.apiKey || '',
-        sender_email: currentConfig.senderEmail || '',
-        sender_name: currentConfig.senderName || '',
-        test_recipient: testRecipient || user?.email,
-        smtp_host: currentConfig.smtpHost || null,
-        smtp_port: Number(currentConfig.smtpPort) || 587,
-        smtp_user: currentConfig.smtpUser || null,
-        smtp_pass: currentConfig.smtpPass || null
-      };
-
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
+
+      const payload = {
+        credential_id: testModalCred.id,
+        provider: testModalCred.provider,
+        sender_email: testSenderEmail.trim(),
+        sender_name: 'LeadAgent Prospecting Team',
+        test_recipient: testRecipient || user?.email || 'test@example.com'
+      };
 
       const res = await fetch('http://127.0.0.1:8000/api/email-integrations/test', {
         method: 'POST',
@@ -176,7 +250,7 @@ export default function AccountSettingsPage({ leadsCount = 0, campaignsCount = 0
       if (data.success) {
         setTestResult({
           success: true,
-          message: data.message || `Test email dispatched successfully via ${provider.toUpperCase()}!`
+          message: data.message || `Test email dispatched successfully via ${testModalCred.name}!`
         });
       } else {
         setTestResult({
@@ -194,68 +268,14 @@ export default function AccountSettingsPage({ leadsCount = 0, campaignsCount = 0
     }
   };
 
-  const handleSaveIntegration = async () => {
-    setSavingIntegration(true);
-    setSaveStatus(null);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      if (!token) throw new Error('You must be logged in to save settings.');
-
-      const payload = {
-        provider,
-        api_key: currentConfig.apiKey || '',
-        sender_email: currentConfig.senderEmail || '',
-        sender_name: currentConfig.senderName || '',
-        smtp_host: currentConfig.smtpHost || null,
-        smtp_port: Number(currentConfig.smtpPort) || 587,
-        smtp_user: currentConfig.smtpUser || null,
-        smtp_pass: currentConfig.smtpPass || null
-      };
-
-      const res = await fetch('http://127.0.0.1:8000/api/email-integrations/save', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || data.error || 'Failed to save.');
-
-      setSaveStatus({
-        type: 'success',
-        message: `Your ${provider.toUpperCase()} email integration is active and saved successfully!`
-      });
-      setIsConfigured(true);
-      setSavedIntegration({
-        ...payload,
-        api_key_masked: data.data?.api_key_masked || currentConfig.apiKey
-      });
-      if (data.data?.api_key_masked) {
-        updateCurrentConfig('apiKey', data.data.api_key_masked);
-      }
-    } catch (err) {
-      setSaveStatus({
-        type: 'error',
-        message: err.message
-      });
-    } finally {
-      setSavingIntegration(false);
-    }
-  };
-
   const handlePasswordUpdate = async (e) => {
     e.preventDefault();
     setPasswordStatus(null);
 
-    const { isValid, hint } = checkPasswordStrength(newPassword);
-    if (!isValid) {
+    if (newPassword.length < 8) {
       setPasswordStatus({
         type: 'error',
-        message: `Password requirement missing: ${hint}`
+        message: 'Password must be at least 8 characters long.'
       });
       return;
     }
@@ -263,7 +283,7 @@ export default function AccountSettingsPage({ leadsCount = 0, campaignsCount = 0
     if (newPassword !== confirmPassword) {
       setPasswordStatus({
         type: 'error',
-        message: 'Passwords do not match. Please verify.'
+        message: 'Passwords do not match. Please re-enter.'
       });
       return;
     }
@@ -278,7 +298,7 @@ export default function AccountSettingsPage({ leadsCount = 0, campaignsCount = 0
 
       setPasswordStatus({
         type: 'success',
-        message: 'Your password has been securely updated!'
+        message: 'Your password was updated successfully.'
       });
       setNewPassword('');
       setConfirmPassword('');
@@ -293,454 +313,506 @@ export default function AccountSettingsPage({ leadsCount = 0, campaignsCount = 0
   };
 
   return (
-    <div className="w-full space-y-8 animate-in fade-in duration-200 pb-12">
+    <div className="space-y-8 animate-in fade-in duration-200">
       
-      {/* 1. Page Header */}
-      <div className="pb-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Top Breadcrumb Ribbon */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-700">
-            <User className="w-4 h-4" />
-            <span>Tenant Management</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">
-            Account Settings & Security
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            Account Settings & Infrastructure
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Manage your credentials, authentication security, subscription quota, and outbound email dispatchers.
+          <p className="text-xs text-slate-500 mt-1">
+            Manage provider credentials vault, security policies, and cold email deliverability.
           </p>
         </div>
 
         <button
           type="button"
-          onClick={() => navigate('/docs')}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-emerald-50/60 text-emerald-800 text-xs font-bold transition-all border border-emerald-200 shadow-2xs self-start sm:self-auto cursor-pointer"
+          onClick={() => navigate('/docs?tab=overview')}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all shadow-2xs cursor-pointer self-start sm:self-auto"
         >
           <BookOpen className="w-4 h-4 text-emerald-600" />
-          <span>Integration Guides</span>
+          <span>Integration & Security Docs</span>
           <ChevronRight className="w-3.5 h-3.5 text-emerald-500" />
         </button>
       </div>
 
       {/* ================================================================
-          1. OUTBOUND EMAIL ACCOUNTS (BYOK) - TOP HERO CARD
+          1. PROVIDER CREDENTIALS VAULT (BYOK - ENTERPRISE MANAGER)
          ================================================================ */}
-      <div className="space-y-6">
-        {/* Outbound Email Card */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6">
-            
-            {/* Card Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0">
-                  <Mail className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-base font-bold text-slate-900">Outbound Email Accounts (BYOK)</h2>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200 uppercase tracking-wider">
-                      Bring Your Own Key
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Dispatch automated cold campaigns directly through your official company domain and email provider.
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                {savedIntegration ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Active: {(savedIntegration?.provider || provider || 'BREVO').toUpperCase()}</span>
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold">
-                    <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                    <span>Not Connected</span>
-                  </span>
-                )}
-              </div>
+      <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6">
+        
+        {/* Card Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0">
+              <Key className="w-5 h-5" />
             </div>
-
-            {/* Elegant Documentation Callout Banner */}
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
-              <div className="flex items-center gap-2.5 text-xs text-slate-600">
-                <BookOpen className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>
-                  Need step-by-step assistance setting up {provider.toUpperCase()} or resolving security restrictions?
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base font-bold text-slate-900">Email Provider Credentials Vault</h2>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200 uppercase tracking-wider">
+                  BYOK Vault
+                </span>
+                <span className="text-xs font-mono font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                  {credentialsList.length} Connected
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={() => navigate(`/docs?provider=${provider}`)}
-                className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer shrink-0"
+              <p className="text-xs text-slate-500 mt-0.5">
+                Save and name your provider API keys (Resend, Brevo, SendGrid, SMTP) once, then bind them seamlessly to any campaign.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleOpenAddCredModal}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-2xs hover:shadow-md active:scale-95 cursor-pointer shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Connect New Provider</span>
+          </button>
+        </div>
+
+        {/* Credentials Grid */}
+        {loadingCredentials ? (
+          <div className="py-12 text-center text-xs text-slate-400 flex flex-col items-center gap-2">
+            <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+            <span>Loading credentials vault...</span>
+          </div>
+        ) : credentialsList.length === 0 ? (
+          <div className="p-8 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/60 text-center space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 text-slate-400 flex items-center justify-center mx-auto shadow-2xs">
+              <Key className="w-6 h-6" />
+            </div>
+            <div className="max-w-md mx-auto">
+              <h3 className="text-xs font-bold text-slate-800">No Email Provider Credentials Added Yet</h3>
+              <p className="text-[11px] text-slate-500 mt-1">
+                Connect your Resend, Brevo, SendGrid, or SMTP server keys here. You can then attach them to any prospecting campaign with specific sender email addresses.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleOpenAddCredModal}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-2xs transition-all cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Connect Your First Provider Key</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {credentialsList.map((cred) => (
+              <div 
+                key={cred.id} 
+                className="p-4 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between space-y-3"
               >
-                <span>Read {provider.toUpperCase()} Guide</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
+                        {cred.provider}
+                      </span>
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full">
+                        <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                        <span>Verified</span>
+                      </span>
+                    </div>
 
-            {/* Provider Selector */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-2">
-                Select Email Service Provider
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {[
-                  { id: 'brevo', name: 'Brevo', subtext: '300 free/day', tag: 'Recommended' },
-                  { id: 'sendgrid', name: 'SendGrid', subtext: '100 free/day', tag: 'Twilio' },
-                  { id: 'resend', name: 'Resend', subtext: '3,000 free/mo', tag: 'Modern API' },
-                  { id: 'smtp', name: 'Custom SMTP', subtext: 'GSuite / cPanel', tag: 'Universal' },
-                ].map(item => {
-                  const isSelected = provider === item.id;
-                  const isSaved = savedIntegration?.provider === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => handleProviderSwitch(item.id)}
-                      className={`p-3.5 rounded-2xl border text-left transition-all relative flex flex-col justify-between cursor-pointer ${
-                        isSelected
-                          ? 'border-emerald-600 bg-emerald-50/50 shadow-xs ring-2 ring-emerald-500/20'
-                          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between gap-1 mb-1">
-                          <span className="font-bold text-xs text-slate-900">{item.name}</span>
-                          {isSaved ? (
-                            <span className="flex items-center gap-1 text-[9px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-1.5 py-0.5 rounded-full" title="Currently Active Provider">
-                              <Check className="w-2.5 h-2.5 text-emerald-700" />
-                              <span>Active</span>
-                            </span>
-                          ) : isSelected ? (
-                            <span className="w-2 h-2 rounded-full bg-emerald-500" title="Selected for setup" />
-                          ) : null}
-                        </div>
-                        <p className="text-[10px] text-slate-500 font-medium">{item.subtext}</p>
-                      </div>
-                      <div className="flex items-center justify-between gap-1 mt-2">
-                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                          isSelected ? 'bg-emerald-200/60 text-emerald-900' : 'bg-slate-100 text-slate-600'
-                        }`}>
-                          {item.tag}
-                        </span>
-                        {isSelected && !isSaved && (
-                          <span className="text-[9px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
-                            Editing
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Provider Credentials Form */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Sender Display Name <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Acme Sales Team or John Doe"
-                  value={currentConfig.senderName || ''}
-                  onChange={(e) => updateCurrentConfig('senderName', e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 font-medium placeholder:text-slate-400 placeholder:font-normal"
-                />
-                <p className="text-[10px] text-slate-400 mt-1">The name recipients will see in their inbox</p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Sender Email Address <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  placeholder="e.g. contact@yourcompany.com"
-                  value={currentConfig.senderEmail || ''}
-                  onChange={(e) => updateCurrentConfig('senderEmail', e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 font-mono font-medium placeholder:text-slate-400 placeholder:font-normal"
-                />
-                <p className="text-[10px] text-slate-400 mt-1">Must be an authorized/verified sender in your {provider.toUpperCase()} account</p>
-              </div>
-
-              {/* API Key for Brevo, SendGrid, Resend */}
-              {provider !== 'smtp' && (
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    {provider.toUpperCase()} API Key <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={currentConfig.showApiKey ? "text" : "password"}
-                      placeholder={provider === 'brevo' ? 'xkeysib-...' : provider === 'sendgrid' ? 'SG.xxxxxxxxxxxxxxxxxxxxxx...' : 're_xxxxxxxxxxxxxxxxxxxxxx...'}
-                      value={currentConfig.apiKey || ''}
-                      onChange={(e) => updateCurrentConfig('apiKey', e.target.value)}
-                      className="w-full pl-3.5 pr-10 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 font-mono font-medium placeholder:text-slate-400 placeholder:font-normal"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => updateCurrentConfig('showApiKey', !currentConfig.showApiKey)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none p-1 rounded-md transition-colors cursor-pointer"
-                      title={currentConfig.showApiKey ? "Hide API key" : "Show API key"}
-                    >
-                      {currentConfig.showApiKey ? <EyeOff className="w-4 h-4 text-slate-500" /> : <Eye className="w-4 h-4 text-slate-400" />}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Custom SMTP Fields */}
-              {provider === 'smtp' && (
-                <>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      SMTP Host Server <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. smtp.gmail.com or mail.yourdomain.com"
-                      value={currentConfig.smtpHost || ''}
-                      onChange={(e) => updateCurrentConfig('smtpHost', e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 font-mono text-xs font-medium placeholder:text-slate-400 placeholder:font-normal"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      SMTP Port <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      placeholder="587"
-                      value={currentConfig.smtpPort || 587}
-                      onChange={(e) => updateCurrentConfig('smtpPort', e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 font-mono text-xs font-medium placeholder:text-slate-400 placeholder:font-normal"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      SMTP Username <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. user@yourdomain.com"
-                      value={currentConfig.smtpUser || ''}
-                      onChange={(e) => updateCurrentConfig('smtpUser', e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 font-mono text-xs font-medium placeholder:text-slate-400 placeholder:font-normal"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      SMTP Password / App Password <span className="text-rose-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={currentConfig.showSmtpPass ? "text" : "password"}
-                        placeholder="Enter SMTP password or 16-char App Password"
-                        value={currentConfig.smtpPass || ''}
-                        onChange={(e) => updateCurrentConfig('smtpPass', e.target.value)}
-                        className="w-full pl-3.5 pr-10 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 font-mono text-xs font-medium placeholder:text-slate-400 placeholder:font-normal"
-                      />
+                    <div className="flex items-center gap-1">
                       <button
                         type="button"
-                        onClick={() => updateCurrentConfig('showSmtpPass', !currentConfig.showSmtpPass)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none p-1 rounded-md transition-colors cursor-pointer"
+                        onClick={() => handleOpenEditCredModal(cred)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                        title="Edit Credential"
                       >
-                        {currentConfig.showSmtpPass ? <EyeOff className="w-4 h-4 text-slate-500" /> : <Eye className="w-4 h-4 text-slate-400" />}
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteCredential(cred.id, cred.name)}
+                        className="p-1.5 rounded-lg text-rose-400 hover:text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer"
+                        title="Delete Credential"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
-                </>
-              )}
-            </div>
 
-            {/* Verification & Test Dispatch Section */}
-            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3.5">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-amber-500" />
-                  <span className="text-xs font-bold text-slate-900">Verify & Test Connection</span>
-                </div>
-                <span className="text-[11px] text-slate-400">Dispatches an immediate live test email</span>
-              </div>
+                  <h3 className="text-sm font-bold text-slate-900 mt-2.5 truncate" title={cred.name}>
+                    {cred.name}
+                  </h3>
 
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                <input
-                  type="email"
-                  placeholder="Recipient email for testing"
-                  value={testRecipient}
-                  onChange={(e) => setTestRecipient(e.target.value)}
-                  className="flex-1 px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 font-medium bg-white"
-                />
-                <button
-                  type="button"
-                  onClick={handleTestEmail}
-                  disabled={testingConnection || !senderEmail}
-                  className="px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
-                >
-                  {testingConnection ? (
-                    <>
-                      <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Verifying...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-3.5 h-3.5" />
-                      <span>Send Test Email</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Test Feedback & Smart Diagnostic Alert */}
-              {testResult && (
-                testResult.success ? (
-                  <div className="p-3.5 rounded-xl text-xs font-medium flex items-start gap-2 bg-emerald-50 border border-emerald-200 text-emerald-900 animate-in fade-in duration-150">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <span className="font-bold">Verification Succeeded: </span>
-                      <span>{testResult.message || `Test email dispatched successfully via ${provider.toUpperCase()}!`}</span>
-                    </div>
+                  <div className="mt-2 p-2 rounded-xl bg-slate-50 border border-slate-100 font-mono text-[11px] text-slate-600 truncate">
+                    {cred.provider === 'smtp' ? (
+                      <span>{cred.smtp_host || 'Custom SMTP Server'}:{cred.smtp_port || 587}</span>
+                    ) : (
+                      <span>Key: {cred.api_key_masked || '••••••••••••••••'}</span>
+                    )}
                   </div>
-                ) : (() => {
-                  const diagnostic = diagnoseEmailError(testResult.error, provider);
-                  if (diagnostic) {
-                    return (
-                      <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-300 text-amber-950 space-y-3 animate-in fade-in duration-150">
-                        <div className="flex items-start gap-2.5">
-                          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-bold text-xs text-amber-950">{diagnostic.title}</span>
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-200 text-amber-900 border border-amber-300 uppercase tracking-wider">
-                                {diagnostic.badge}
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-amber-900/90 mt-1 leading-relaxed">
-                              {diagnostic.summary}
-                            </p>
-                          </div>
-                        </div>
+                </div>
 
-                        {/* Detected IP if applicable */}
-                        {diagnostic.detectedIp && (
-                          <div className="p-2.5 rounded-xl bg-white/90 border border-amber-200 text-slate-800 flex items-center justify-between flex-wrap gap-2 text-xs">
-                            <span className="text-slate-600 text-[11px]">Detected Connection IP:</span>
-                            <code className="font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-xs">
-                              {diagnostic.detectedIp}
-                            </code>
-                          </div>
-                        )}
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-[10px] text-slate-400">
+                    {cred.created_at ? new Date(cred.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : 'Saved'}
+                  </span>
 
-                        {/* Quick Steps */}
-                        <div className="bg-white/85 p-3 rounded-xl border border-amber-200 space-y-1.5 text-xs text-slate-800">
-                          <span className="font-bold text-slate-900 block text-[11px]">Recommended Solution:</span>
-                          <ul className="list-disc list-inside space-y-1 text-slate-700 text-[11px]">
-                            {diagnostic.steps.map((step, idx) => (
-                              <li key={idx}>{step}</li>
-                            ))}
-                          </ul>
-                        </div>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenTestModal(cred)}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
+                  >
+                    <Send className="w-3 h-3" />
+                    <span>Test Dispatch</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
-                        {/* Action buttons */}
-                        <div className="flex items-center gap-2 pt-1 flex-wrap">
-                          {diagnostic.actionUrl && (
-                            <a
-                              href={diagnostic.actionUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition-colors shadow-2xs"
-                            >
-                              <span>{diagnostic.actionText}</span>
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/docs?provider=${diagnostic.guideTab || provider}`)}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-bold text-xs transition-colors shadow-2xs cursor-pointer"
-                          >
-                            <BookOpen className="w-3 h-3 text-emerald-600" />
-                            <span>View Full Guide in Docs ↗</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setShowRawError(!showRawError)}
-                            className="text-[11px] text-slate-500 hover:text-slate-700 underline ml-auto cursor-pointer"
-                          >
-                            {showRawError ? 'Hide Technical Log' : 'View Technical Log'}
-                          </button>
-                        </div>
-
-                        {showRawError && (
-                          <div className="p-3 rounded-xl bg-slate-100 text-slate-700 font-mono text-[10px] break-all border border-slate-200">
-                            {testResult.error}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div className="p-3.5 rounded-xl text-xs font-medium flex flex-col gap-2 bg-rose-50 border border-rose-200 text-rose-800 animate-in fade-in duration-150">
-                      <div className="flex items-start gap-2">
-                        <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                        <div className="flex-1">
-                          <span className="font-bold">Verification Failed: </span>
-                          <span>{testResult.error}</span>
-                        </div>
-                      </div>
-                      <div className="pt-1 flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/docs?provider=${provider}`)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white border border-rose-200 text-rose-900 font-bold text-[11px] hover:bg-rose-100/50 transition-colors cursor-pointer"
-                        >
-                          <BookOpen className="w-3 h-3 text-rose-700" />
-                          <span>Open {provider.toUpperCase()} Guide in Docs</span>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })()
-              )}
+        {/* Integration Guides & Troubleshooting Accordion / Banner */}
+        <div className="pt-4 border-t border-slate-100 space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center gap-3">
+              <BookOpen className="w-5 h-5 text-emerald-600 shrink-0" />
+              <div>
+                <h4 className="text-xs font-bold text-slate-900">Integration Guides & DNS Verification Assistance</h4>
+                <p className="text-[11px] text-slate-500">
+                  Step-by-step guides for domain authentication (SPF, DKIM, DMARC) and API key generation.
+                </p>
+              </div>
             </div>
 
-            {/* Save Status Banner */}
-            {saveStatus && (
-              <div className={`p-3.5 rounded-xl text-xs font-medium flex items-center gap-2 animate-in fade-in duration-150 ${
-                saveStatus.type === 'success'
-                  ? 'bg-emerald-50 border border-emerald-200 text-emerald-900'
-                  : 'bg-rose-50 border border-rose-200 text-rose-800'
-              }`}>
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>{saveStatus.message}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {['resend', 'brevo', 'sendgrid', 'smtp'].map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setGuideProvider(p)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase transition-all cursor-pointer ${
+                    guideProvider === p
+                      ? 'bg-slate-900 text-white shadow-2xs'
+                      : 'bg-white text-slate-600 hover:bg-slate-200 border border-slate-200'
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
 
-            {/* Save Configuration Button */}
-            <div className="pt-2">
+          {/* Quick Guide Box based on selected provider */}
+          <div className="p-4 rounded-2xl bg-white border border-slate-200 text-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>{guideProvider.toUpperCase()} Setup & DNS Best Practices:</span>
+              </span>
               <button
                 type="button"
-                onClick={handleSaveIntegration}
-                disabled={savingIntegration || !senderEmail}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                onClick={() => navigate(`/docs?provider=${guideProvider}`)}
+                className="text-[11px] font-bold text-emerald-600 hover:underline flex items-center gap-1"
               >
-                {savingIntegration && <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
-                <span>Save Email Provider Settings</span>
+                <span>Read Full Documentation</span>
+                <ChevronRight className="w-3 h-3" />
               </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-[11px]">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
+                <span className="font-bold text-slate-800 block">1. API Key Generation</span>
+                <p className="text-slate-500">
+                  {guideProvider === 'resend' && 'Navigate to Resend Dashboard > API Keys > Create API Key with Sending access.'}
+                  {guideProvider === 'brevo' && 'Navigate to Brevo Settings > SMTP & API > API Keys > Generate a new API Key.'}
+                  {guideProvider === 'sendgrid' && 'Navigate to SendGrid Settings > API Keys > Create Key with Mail Send permissions.'}
+                  {guideProvider === 'smtp' && 'Use your corporate webmail or Google Workspace App Password (16 characters).'}
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
+                <span className="font-bold text-slate-800 block">2. Domain Authentication</span>
+                <p className="text-slate-500">
+                  Add the provided TXT and CNAME DNS records (DKIM, SPF) to your domain registrar (Cloudflare, Namecheap, GoDaddy).
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
+                <span className="font-bold text-slate-800 block">3. In-Campaign Usage</span>
+                <p className="text-slate-500">
+                  Inside each campaign, select this credential and specify any authorized sender email on your verified domain!
+                </p>
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
       {/* ================================================================
-          2. PROFILE, QUOTAS & SECURITY (3 BALANCED SIDE-BY-SIDE COLUMNS)
+          2. CONNECT / EDIT CREDENTIAL MODAL
+         ================================================================ */}
+      {isCredModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 sm:p-7 space-y-5 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <Key className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    {editingCredId ? 'Edit Provider Credential' : 'Connect New Provider Credential'}
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Configure API key or server authentication for outbound delivery.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCredModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {credStatus && (
+              <div className={`p-3 rounded-xl border text-xs font-bold flex items-start gap-2 ${
+                credStatus.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
+              }`}>
+                {credStatus.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> : <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />}
+                <span>{credStatus.message}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveCredential} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Credential Name / Label <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Hireley Resend Master or Agency Brevo"
+                  value={credForm.name}
+                  onChange={(e) => setCredForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-emerald-500 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1.5">
+                  Email Service Provider
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { id: 'resend', name: 'Resend', tag: 'Modern' },
+                    { id: 'brevo', name: 'Brevo', tag: 'High Quota' },
+                    { id: 'sendgrid', name: 'SendGrid', tag: 'Twilio' },
+                    { id: 'smtp', name: 'Custom SMTP', tag: 'Universal' }
+                  ].map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setCredForm(prev => ({ ...prev, provider: p.id }))}
+                      className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                        credForm.provider === p.id
+                          ? 'border-emerald-600 bg-emerald-50/60 shadow-xs ring-1 ring-emerald-500'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className="font-bold text-slate-900 block text-xs">{p.name}</span>
+                      <span className="text-[9px] text-slate-400 block">{p.tag}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {credForm.provider !== 'smtp' ? (
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    {credForm.provider.toUpperCase()} API Key <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={credForm.showApiKey ? 'text' : 'password'}
+                      required
+                      placeholder={
+                        credForm.provider === 'resend' ? 're_123456789...' :
+                        credForm.provider === 'sendgrid' ? 'SG.xxxxxxxxxxxx...' :
+                        'xkeysib-xxxxxxxxxxxx...'
+                      }
+                      value={credForm.apiKey}
+                      onChange={(e) => setCredForm(prev => ({ ...prev, apiKey: e.target.value }))}
+                      className="w-full pl-3 pr-9 py-2 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-emerald-500 font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setCredForm(prev => ({ ...prev, showApiKey: !prev.showApiKey }))}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      {credForm.showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-emerald-600 shrink-0" />
+                    <span>Key will be verified with {credForm.provider.toUpperCase()} upon saving.</span>
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2.5 p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-700 mb-0.5">SMTP Host</label>
+                    <input
+                      type="text"
+                      placeholder="smtp.domain.com"
+                      value={credForm.smtpHost}
+                      onChange={(e) => setCredForm(prev => ({ ...prev, smtpHost: e.target.value }))}
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-700 mb-0.5">Port</label>
+                    <input
+                      type="number"
+                      placeholder="587"
+                      value={credForm.smtpPort}
+                      onChange={(e) => setCredForm(prev => ({ ...prev, smtpPort: e.target.value }))}
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-700 mb-0.5">Username</label>
+                    <input
+                      type="text"
+                      placeholder="user@domain.com"
+                      value={credForm.smtpUser}
+                      onChange={(e) => setCredForm(prev => ({ ...prev, smtpUser: e.target.value }))}
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-700 mb-0.5">Password</label>
+                    <input
+                      type="password"
+                      placeholder="••••••••••••"
+                      value={credForm.smtpPass}
+                      onChange={(e) => setCredForm(prev => ({ ...prev, smtpPass: e.target.value }))}
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white font-mono"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCredModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingCred}
+                  className="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                >
+                  {savingCred && <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                  <span>{editingCredId ? 'Update Credential' : 'Save & Verify Key'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================
+          3. TEST DISPATCH MODAL
+         ================================================================ */}
+      {testModalCred && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Send className="w-4 h-4 text-emerald-600" />
+                <h3 className="text-sm font-bold text-slate-900">
+                  Test Dispatch: {testModalCred.name}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTestModalCred(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Authorized Sender Email <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="e.g. partners@hireley.net or tamer@merotix.com"
+                  value={testSenderEmail}
+                  onChange={(e) => setTestSenderEmail(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-emerald-500 font-medium"
+                />
+                <span className="text-[10px] text-slate-400 block mt-0.5">
+                  Must be an authenticated domain or verified sender in your {testModalCred.provider.toUpperCase()} account.
+                </span>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Test Recipient Email
+                </label>
+                <input
+                  type="email"
+                  value={testRecipient}
+                  onChange={(e) => setTestRecipient(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-emerald-500 font-medium"
+                />
+              </div>
+
+              {testResult && (
+                <div className={`p-2.5 rounded-xl border text-[11px] font-semibold flex items-start gap-2 ${
+                  testResult.success ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
+                }`}>
+                  {testResult.success ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" /> : <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />}
+                  <span className="leading-relaxed">{testResult.message || testResult.error}</span>
+                </div>
+              )}
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTestModalCred(null)}
+                  className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRunTestDispatch}
+                  disabled={testingConnection || !testSenderEmail}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                >
+                  {testingConnection && <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                  <span>Dispatch Verification Email</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================
+          4. PROFILE, QUOTAS & SECURITY (3 BALANCED SIDE-BY-SIDE COLUMNS)
          ================================================================ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         

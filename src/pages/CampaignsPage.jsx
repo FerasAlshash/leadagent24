@@ -12,6 +12,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useConfirm } from '../context/ConfirmContext';
 import { supabase } from '../lib/supabase';
 import CampaignCard from '../components/CampaignCard';
 import CampaignModal from '../components/CampaignModal';
@@ -28,6 +29,7 @@ export default function CampaignsPage({
   loading = false
 }) {
   const { session } = useAuth();
+  const { confirm } = useConfirm();
   const [editingCampaign, setEditingCampaign] = useState(null);
 
   // Helper to ensure fresh token
@@ -83,9 +85,13 @@ export default function CampaignsPage({
 
   // Handle Delete
   const handleDeleteCampaign = async (campaignId) => {
-    if (!window.confirm('Are you sure you want to delete this campaign? All extracted leads associated with this campaign will also be deleted.')) {
-      return;
-    }
+    const ok = await confirm({
+      title: 'Delete Campaign',
+      message: 'Are you sure you want to delete this campaign? All extracted leads and data associated with this campaign will also be permanently deleted.',
+      confirmText: 'Delete Campaign',
+      isDanger: true
+    });
+    if (!ok) return;
 
     try {
       const token = await getValidToken();

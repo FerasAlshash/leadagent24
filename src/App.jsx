@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import { useConfirm } from './context/ConfirmContext';
 import { supabase } from './lib/supabase';
 
 // 1. Lazy-loaded Core SaaS Pages (Code Splitting)
@@ -9,6 +10,7 @@ const AuthPage = lazy(() => import('./pages/AuthPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const CampaignsPage = lazy(() => import('./pages/CampaignsPage'));
 const CampaignDetailPage = lazy(() => import('./pages/CampaignDetailPage'));
+const CampaignSettingsPage = lazy(() => import('./pages/CampaignSettingsPage'));
 const AuditLogPage = lazy(() => import('./pages/AuditLogPage'));
 const AccountSettingsPage = lazy(() => import('./pages/AccountSettingsPage'));
 const AdminConsolePage = lazy(() => import('./pages/AdminConsolePage'));
@@ -122,8 +124,91 @@ function CampaignWorkspaceRoute({
   );
 }
 
+// Dedicated Full-Page Campaign Settings Route Wrapper
+function CampaignSettingsRoute({
+  allCampaigns,
+  loadingData,
+  onUpdateCampaign,
+  onDeleteCampaign,
+  refreshAllData
+}) {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [directCampaign, setDirectCampaign] = useState(null);
+  const [fetchingDirect, setFetchingDirect] = useState(false);
+
+  const foundCampaign = allCampaigns.find(c => String(c.id) === String(id));
+
+  useEffect(() => {
+    if (!foundCampaign && id) {
+      let isMounted = true;
+      setFetchingDirect(true);
+      const fetchSingleCampaign = async () => {
+        try {
+          const { data } = await supabase.auth.getSession();
+          const token = data?.session?.access_token;
+          const res = await fetch(`${FASTAPI_URL}/api/campaigns/${id}`, {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+          });
+          if (res.ok) {
+            const json = await res.json();
+            if (isMounted) {
+              setDirectCampaign(json.campaign || json);
+            }
+          }
+        } catch (err) {
+          console.warn('Could not fetch single campaign:', err);
+        } finally {
+          if (isMounted) setFetchingDirect(false);
+        }
+      };
+      fetchSingleCampaign();
+      return () => { isMounted = false; };
+    }
+  }, [id, foundCampaign]);
+
+  const activeCampaign = foundCampaign || directCampaign;
+
+  if (!activeCampaign && (loadingData || fetchingDirect)) {
+    return (
+      <div className="flex flex-col items-center justify-center p-20 space-y-4">
+        <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+        <span className="text-xs font-semibold text-slate-500">Loading Campaign Settings...</span>
+      </div>
+    );
+  }
+
+  if (!activeCampaign) {
+    return (
+      <div className="p-8 text-center bg-white rounded-3xl border border-slate-200 shadow-2xs space-y-4 max-w-md mx-auto my-12">
+        <h3 className="text-lg font-bold text-slate-900">Campaign Not Found</h3>
+        <p className="text-xs text-slate-500 leading-relaxed">
+          The requested campaign could not be found or you may not have permission to view it.
+        </p>
+        <button
+          type="button"
+          onClick={() => navigate('/campaigns')}
+          className="px-5 py-2.5 text-xs font-bold bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-2xs"
+        >
+          Back to All Campaigns
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <CampaignSettingsPage
+      campaign={activeCampaign}
+      onBack={() => navigate(`/campaigns/${id}`)}
+      onUpdateCampaign={onUpdateCampaign}
+      onDeleteCampaign={onDeleteCampaign}
+    />
+  );
+}
+
 export default function App() {
   const { user, session, loading: authLoading } = useAuth();
+  const { confirm } = useConfirm();
   const navigate = useNavigate();
   const location = useLocation();
   const pathname = location.pathname;
@@ -248,12 +333,6 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         setAllCampaigns(data || []);
-        
-        // Update selectedCampaign if currently viewed
-        if (selectedCampaign) {
-          const updated = (data || []).find(c => c.id === selectedCampaign.id);
-          if (updated) setSelectedCampaign(updated);
-        }
       }
     } catch (err) {
       console.warn('Failed to fetch campaigns:', err);
@@ -387,29 +466,52 @@ export default function App() {
     }
   };
 
-  // Update Campaign Handler
-  const handleUpdateCampaign = async (campaignId, payload) => {
+  // Update Campaign Handler (Polymorphic: accepts (campaignId, payload) or single payload object with id)
+  const handleUpdateCampaign = async (campaignIdOrPayload, maybePayload) => {
     const token = await getValidToken();
     if (!token) throw new Error('Not authenticated');
 
-    const res = await fetch(`${FASTAPI_URL}/api/campaigns/${campaignId}`, {
+    let actualId = campaignIdOrPayload;
+    let actualPayload = maybePayload;
+
+    if (typeof campaignIdOrPayload === 'object' && campaignIdOrPayload !== null) {
+      actualId = campaignIdOrPayload.id || campaignIdOrPayload.campaign_id;
+      actualPayload = campaignIdOrPayload;
+    }
+
+    if (!actualId) {
+      throw new Error('Campaign ID is required to update campaign');
+    }
+
+    const res = await fetch(`${FASTAPI_URL}/api/campaigns/${actualId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(actualPayload)
     });
 
     if (!res.ok) {
-      throw new Error('Failed to update campaign');
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to update campaign');
     }
 
     await refreshAllData();
   };
 
   // Delete Campaign Handler
-  const handleDeleteCampaign = async (campaignId) => {
+  const handleDeleteCampaign = async (campaignId, confirmed = false) => {
+    if (!confirmed) {
+      const ok = await confirm({
+        title: 'Delete Campaign',
+        message: 'Are you sure you want to delete this campaign? All extracted leads and workspace settings will be permanently removed.',
+        confirmText: 'Delete Campaign',
+        isDanger: true
+      });
+      if (!ok) return;
+    }
+
     const token = await getValidToken();
     if (!token) return;
 
@@ -459,7 +561,8 @@ export default function App() {
       });
 
       if (!response.ok) {
-        throw new Error(`Server returned ${response.status}`);
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.detail || errJson.error || `Server returned ${response.status}`);
       }
 
       // Add notification to header bell dropdown
@@ -485,7 +588,7 @@ export default function App() {
         id: `notif-${Date.now()}`,
         type: 'system',
         title: 'Prospecting Search Failed',
-        message: 'Could not complete the search request. Please verify your connection or try again.',
+        message: err.message || 'Could not complete the search request.',
         time: 'Just now',
         read: false,
         target: {
@@ -493,6 +596,7 @@ export default function App() {
         }
       };
       setNotifications(prev => [errorNotif, ...prev]);
+      throw err;
     } finally {
       setIsSearching(false);
     }
@@ -598,15 +702,24 @@ export default function App() {
                   <>
                     <button 
                       onClick={() => navigate('/campaigns')}
-                      className="hover:underline text-slate-500"
+                      className="hover:underline text-slate-500 cursor-pointer"
                     >
                       Campaigns
                     </button>
                     <span>/</span>
-                    <span className="text-emerald-700 font-bold flex items-center gap-1">
+                    <button
+                      onClick={() => navigate(`/campaigns/${currentCampaignId}`)}
+                      className={`hover:underline cursor-pointer ${pathname.endsWith('/settings') ? 'text-slate-500' : 'text-emerald-700 font-bold'} flex items-center gap-1`}
+                    >
                       <Briefcase className="w-3 h-3" />
-                      {headerCampaign?.company_name || headerCampaign?.title || 'Campaign Workspace'}
-                    </span>
+                      <span>{headerCampaign?.company_name || headerCampaign?.title || 'Campaign Workspace'}</span>
+                    </button>
+                    {pathname.endsWith('/settings') && (
+                      <>
+                        <span>/</span>
+                        <span className="text-emerald-700 font-bold">Settings & Outbound</span>
+                      </>
+                    )}
                   </>
                 )}
               </div>
@@ -614,7 +727,7 @@ export default function App() {
                 {isDashboard && 'Analytics & Outreach Intelligence'}
                 {isCampaigns && 'My Outbound Campaigns'}
                 {isAudit && 'Activity & Outbound Audit Log'}
-                {isCampaignDetail && (headerCampaign?.company_name || headerCampaign?.title || 'Campaign Workspace')}
+                {isCampaignDetail && (pathname.endsWith('/settings') ? 'Campaign Settings & Outbound Architecture' : (headerCampaign?.company_name || headerCampaign?.title || 'Campaign Workspace'))}
                 {isSettings && 'Account Settings & Security'}
                 {isAdminPath && '👑 Admin Automation Console'}
               </h2>
@@ -636,14 +749,14 @@ export default function App() {
                 className="w-9 h-9 rounded-full bg-emerald-600 flex items-center justify-center text-white text-sm font-bold shadow-xs shrink-0 aspect-square cursor-default ring-2 ring-emerald-500/20 select-none"
                 title={user.email || 'User Profile'}
               >
-                {user.email ? user.email[0].toUpperCase() : 'U'}
+                {user.email ? user.email.charAt(0).toUpperCase() : 'U'}
               </div>
             </div>
           </div>
         </header>
 
-        {/* Dynamic Main Page Content via URL Routes */}
-        <main className="flex-1 w-full workspace-fluid-layout">
+        {/* 3. Dynamic Page View Outlet */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
           <Suspense fallback={<PageLoadingFallback />}>
             <Routes>
               <Route 
@@ -694,6 +807,18 @@ export default function App() {
                     loadingData={loadingData}
                     onLaunchSearch={handleLaunchSearchInCampaign}
                     isSearching={isSearching}
+                    onUpdateCampaign={handleUpdateCampaign}
+                    onDeleteCampaign={handleDeleteCampaign}
+                    refreshAllData={refreshAllData}
+                  />
+                } 
+              />
+              <Route 
+                path="/campaigns/:id/settings" 
+                element={
+                  <CampaignSettingsRoute
+                    allCampaigns={allCampaigns}
+                    loadingData={loadingData}
                     onUpdateCampaign={handleUpdateCampaign}
                     onDeleteCampaign={handleDeleteCampaign}
                     refreshAllData={refreshAllData}

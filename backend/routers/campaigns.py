@@ -193,6 +193,24 @@ async def launch_campaign(req: CampaignLaunchRequest, authorization: Optional[st
     user_id = verify_token(authorization)
     campaign_id = req.campaign_id
 
+    # 0. Strict Pre-flight Check: Outbound delivery provider MUST be configured for this campaign
+    if campaign_id:
+        from backend.routers.email_integrations import read_local_campaign_email_settings
+        outbound_integ = read_local_campaign_email_settings(campaign_id)
+        if not outbound_integ and user_id != "default":
+            try:
+                res_integ = supabase_admin.table("campaign_email_integrations").select("*").eq("campaign_id", campaign_id).execute()
+                if res_integ.data and len(res_integ.data) > 0:
+                    outbound_integ = res_integ.data[0]
+            except Exception:
+                pass
+
+        if not outbound_integ or not outbound_integ.get("sender_email") or not outbound_integ.get("provider"):
+            raise HTTPException(
+                status_code=400,
+                detail="Outbound email dispatcher is not configured for this campaign. Please configure Resend, Brevo, SendGrid, or SMTP in Campaign Settings before launching outreach."
+            )
+
     # 1. Update or create campaign record
     if campaign_id:
         try:
@@ -330,6 +348,23 @@ def list_campaigns(authorization: Optional[str] = Header(None)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/{campaign_id}")
+def get_single_campaign(campaign_id: str, authorization: Optional[str] = Header(None)):
+    """
+    Fetch a single campaign by ID with decoded company profile metadata.
+    """
+    user_id = verify_token(authorization)
+    try:
+        camp_res = supabase_admin.table("campaigns").select("*").eq("id", campaign_id).eq("user_id", user_id).execute()
+        if not camp_res.data or len(camp_res.data) == 0:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+        camp = decode_campaign(camp_res.data[0])
+        return {"success": True, "campaign": camp}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.delete("/{campaign_id}")
 def delete_campaign(campaign_id: str, authorization: Optional[str] = Header(None)):
     """
@@ -387,23 +422,71 @@ async def dispatch_campaign_email(payload: DispatchEmailRequest):
     
     # 2. Database lookup via campaign_id
     elif payload.campaign_id:
+        camp_sender_name = None
         try:
-            camp_res = supabase_admin.table("campaigns").select("id, user_id, title").eq("id", payload.campaign_id).execute()
-            if camp_res.data:
-                user_id = camp_res.data[0].get("user_id")
-                integ_res = supabase_admin.table("user_email_integrations").select("*").eq("user_id", user_id).execute()
-                if integ_res.data:
-                    integ = integ_res.data[0]
-                    provider = integ.get("provider", "brevo")
-                    credentials = {
-                        "api_key": integ.get("api_key") or "",
-                        "sender_email": integ.get("sender_email") or "",
-                        "sender_name": integ.get("sender_name") or "Marketing Team",
-                        "smtp_host": integ.get("smtp_host"),
-                        "smtp_port": integ.get("smtp_port") or 587,
-                        "smtp_user": integ.get("smtp_user"),
-                        "smtp_pass": integ.get("smtp_pass")
-                    }
+            # 2a. First, check if this campaign has a dedicated, custom email provider integration
+            custom_camp_integ = None
+            try:
+                camp_integ_res = supabase_admin.table("campaign_email_integrations").select("*").eq("campaign_id", payload.campaign_id).execute()
+                if camp_integ_res.data and len(camp_integ_res.data) > 0:
+                    custom_camp_integ = camp_integ_res.data[0]
+            except Exception as e:
+                print(f"[Dispatch] Notice checking campaign_email_integrations: {e}")
+
+            if not custom_camp_integ:
+                from backend.routers.email_integrations import read_local_campaign_email_settings
+                custom_camp_integ = read_local_campaign_email_settings(payload.campaign_id)
+
+            if custom_camp_integ and custom_camp_integ.get("credential_id") and not custom_camp_integ.get("api_key"):
+                from backend.routers.email_integrations import read_local_credential_by_id
+                cred = read_local_credential_by_id(custom_camp_integ["credential_id"])
+                if not cred:
+                    try:
+                        res_c = supabase_admin.table("user_email_credentials").select("*").eq("id", custom_camp_integ["credential_id"]).execute()
+                        if res_c.data:
+                            cred = res_c.data[0]
+                    except Exception:
+                        pass
+                if cred:
+                    custom_camp_integ["api_key"] = cred.get("api_key")
+                    custom_camp_integ["provider"] = cred.get("provider", custom_camp_integ.get("provider"))
+                    custom_camp_integ["smtp_host"] = cred.get("smtp_host", custom_camp_integ.get("smtp_host"))
+                    custom_camp_integ["smtp_port"] = cred.get("smtp_port", custom_camp_integ.get("smtp_port"))
+                    custom_camp_integ["smtp_user"] = cred.get("smtp_user", custom_camp_integ.get("smtp_user"))
+                    custom_camp_integ["smtp_pass"] = cred.get("smtp_pass", custom_camp_integ.get("smtp_pass"))
+
+            if custom_camp_integ and custom_camp_integ.get("sender_email"):
+                provider = custom_camp_integ.get("provider", "resend")
+                credentials = {
+                    "api_key": custom_camp_integ.get("api_key") or "",
+                    "sender_email": custom_camp_integ.get("sender_email") or "",
+                    "sender_name": custom_camp_integ.get("sender_name") or "Marketing Team",
+                    "smtp_host": custom_camp_integ.get("smtp_host"),
+                    "smtp_port": custom_camp_integ.get("smtp_port") or 587,
+                    "smtp_user": custom_camp_integ.get("smtp_user"),
+                    "smtp_pass": custom_camp_integ.get("smtp_pass")
+                }
+                print(f"[Dispatch] Using dedicated Campaign Email Integration: {provider.upper()} ({credentials.get('sender_email')})")
+            else:
+                # 2b. Inherit workspace default settings, aligned with campaign's persona/sender_name
+                camp_res = supabase_admin.table("campaigns").select("id, user_id, title").eq("id", payload.campaign_id).execute()
+                if camp_res.data:
+                    decoded = decode_campaign(camp_res.data[0])
+                    camp_sender_name = decoded.get("sender_name")
+                    user_id = camp_res.data[0].get("user_id")
+                    integ_res = supabase_admin.table("user_email_integrations").select("*").eq("user_id", user_id).execute()
+                    if integ_res.data:
+                        integ = integ_res.data[0]
+                        provider = integ.get("provider", "brevo")
+                        credentials = {
+                            "api_key": integ.get("api_key") or "",
+                            "sender_email": integ.get("sender_email") or "",
+                            "sender_name": camp_sender_name or integ.get("sender_name") or "Marketing Team",
+                            "smtp_host": integ.get("smtp_host"),
+                            "smtp_port": integ.get("smtp_port") or 587,
+                            "smtp_user": integ.get("smtp_user"),
+                            "smtp_pass": integ.get("smtp_pass")
+                        }
         except Exception as err:
             print(f"[Dispatch] Warning during campaign lookup: {err}")
 

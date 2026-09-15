@@ -24,6 +24,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useConfirm } from '../context/ConfirmContext';
 
 const FASTAPI_URL = "http://127.0.0.1:8000";
 
@@ -33,6 +34,7 @@ export default function AdminConsolePage({
   onWebhookUpdated 
 }) {
   const { session } = useAuth();
+  const { confirm } = useConfirm();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -184,7 +186,13 @@ export default function AdminConsolePage({
   };
 
   const handleClearData = async (target) => {
-    if (!confirm(`Are you sure you want to completely clear ${target}? This cannot be undone.`)) return;
+    const ok = await confirm({
+      title: `Clear ${target}`,
+      message: `Are you sure you want to completely wipe ${target}? This cannot be undone.`,
+      confirmText: `Clear ${target}`,
+      isDanger: true
+    });
+    if (!ok) return;
     setClearing(true);
     try {
       const token = session?.access_token;

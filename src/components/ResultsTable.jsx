@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { useConfirm } from '../context/ConfirmContext';
 import SentEmailModal from './SentEmailModal';
 
 // Reliable Google Places rating resolver
@@ -94,6 +95,7 @@ export default function ResultsTable({
   onSelectCampaign = () => {}
 }) {
   const { user, session } = useAuth();
+  const { confirm } = useConfirm();
   const [dbLeads, setDbLeads] = useState([]);
   const [loadingDb, setLoadingDb] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -241,7 +243,13 @@ export default function ResultsTable({
 
   // Delete lead handler
   const handleDeleteLead = async (leadId) => {
-    if (!window.confirm('Delete this lead?')) return;
+    const ok = await confirm({
+      title: 'Delete Lead',
+      message: 'Are you sure you want to permanently delete this lead record?',
+      confirmText: 'Delete Lead',
+      isDanger: true
+    });
+    if (!ok) return;
     try {
       await supabase.from('leads').delete().eq('id', leadId);
       setDbLeads(prev => prev.filter(l => l.id !== leadId));
