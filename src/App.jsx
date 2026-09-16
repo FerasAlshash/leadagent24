@@ -560,9 +560,9 @@ export default function App() {
         })
       });
 
-      if (!response.ok) {
-        const errJson = await response.json().catch(() => ({}));
-        throw new Error(errJson.detail || errJson.error || `Server returned ${response.status}`);
+      const resJson = await response.json().catch(() => ({}));
+      if (!response.ok || resJson.success === false) {
+        throw new Error(resJson.detail || resJson.message || resJson.error || `Server returned ${response.status}`);
       }
 
       // Add notification to header bell dropdown

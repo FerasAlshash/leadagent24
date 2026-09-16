@@ -28,14 +28,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useConfirm } from '../context/ConfirmContext';
-
-const TONE_OPTIONS = [
-  { id: 'Professional', label: 'Professional', subtitle: 'Corporate, ROI-focused' },
-  { id: 'Casual', label: 'Casual', subtitle: 'Warm, conversational' },
-  { id: 'Aggressive', label: 'Urgent', subtitle: 'Direct, action-driven' },
-  { id: 'Consultative', label: 'Consultative', subtitle: 'Advisory, value-first' },
-  { id: 'Creative', label: 'Creative', subtitle: 'Punchy, memorable' },
-];
+import { TONE_OPTIONS, findToneOption } from '../data/emailTones';
 
 // Helper to compute industry-standard Cold Outreach Sender Display Name: "{Persona} from {Company}"
 const computeAutoSenderDisplayName = (persona, company) => {
@@ -973,10 +966,10 @@ export default function CampaignSettingsPage({
                 <div className="flex items-center gap-2 truncate">
                   <MessageSquare className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   <span className="font-bold text-slate-900">
-                    {TONE_OPTIONS.find(t => t.id === emailStyle)?.label || emailStyle || 'Professional'}
+                    {findToneOption(emailStyle).label}
                   </span>
                   <span className="text-[11px] text-slate-400 truncate hidden sm:inline">
-                    • {TONE_OPTIONS.find(t => t.id === emailStyle)?.subtitle || 'Corporate, ROI-focused'}
+                    • {findToneOption(emailStyle).subtitle}
                   </span>
                 </div>
                 <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 ml-2 transition-transform ${isToneOpen ? 'rotate-180' : ''}`} />

@@ -13,7 +13,8 @@ import {
   Mail, 
   Database,
   ArrowRight,
-  ShieldCheck
+  ShieldCheck,
+  AlertCircle
 } from 'lucide-react';
 
 export default function ProspectingProgressModal({
@@ -49,12 +50,12 @@ export default function ProspectingProgressModal({
 
   if (session.isCompleted) {
     currentStage = 4;
-    stageHeadline = `Prospecting Complete! Verified leads saved to database.`;
-    stageDescription = `Successfully enriched and recorded ${session.newLeadsFound} new prospect${session.newLeadsFound === 1 ? '' : 's'} into your campaign database.`;
+    stageHeadline = `Prospecting Complete! Verified leads are ready.`;
+    stageDescription = `Successfully verified and added ${session.newLeadsFound} new prospect${session.newLeadsFound === 1 ? '' : 's'} to your campaign.`;
   } else if (seconds >= 25) {
     currentStage = 3;
     stageHeadline = `Validating emails, deliverability & social channels...`;
-    stageDescription = `Verifying direct contact channels and preparing structured records for database synchronization.`;
+    stageDescription = `Verifying direct contact channels and preparing your qualified prospects list.`;
   } else if (seconds >= 10) {
     currentStage = 2;
     stageHeadline = `Extracting key decision-makers, direct phones & addresses...`;
@@ -80,8 +81,14 @@ export default function ProspectingProgressModal({
     return createPortal(
       <div className="fixed bottom-6 right-6 z-[100] animate-in slide-in-from-bottom-5 duration-200">
         <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl p-4 flex items-center gap-3.5 max-w-md">
-          <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 shrink-0">
-            {session.isCompleted ? (
+          <div className={`relative flex items-center justify-center w-10 h-10 rounded-xl border shrink-0 ${
+            session.isError 
+              ? 'bg-amber-50 text-amber-600 border-amber-200'
+              : 'bg-emerald-50 text-emerald-600 border-emerald-200'
+          }`}>
+            {session.isError ? (
+              <Clock className="w-5 h-5 text-amber-600" />
+            ) : session.isCompleted ? (
               <CheckCircle2 className="w-5 h-5 text-emerald-600 animate-in zoom-in" />
             ) : (
               <>
@@ -94,9 +101,13 @@ export default function ProspectingProgressModal({
           <div className="min-w-0 pr-2">
             <div className="flex items-center gap-2">
               <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                session.isCompleted ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'
+                session.isError
+                  ? 'bg-amber-100 text-amber-800'
+                  : session.isCompleted 
+                    ? 'bg-emerald-100 text-emerald-800' 
+                    : 'bg-slate-100 text-slate-700'
               }`}>
-                {session.isCompleted ? 'Completed' : 'Prospecting Active'}
+                {session.isError ? 'Processing in Background' : session.isCompleted ? 'Completed' : 'Prospecting Active'}
               </span>
               <span className="text-xs font-mono text-slate-400">
                 {formatTime(seconds)}
@@ -142,13 +153,23 @@ export default function ProspectingProgressModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Accent Gradient Bar */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600" />
+        <div className={`h-1.5 w-full ${
+          session.isError 
+            ? 'bg-amber-500' 
+            : 'bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600'
+        }`} />
 
         {/* Modal Header */}
         <div className="p-6 sm:p-7 border-b border-slate-100 flex items-start justify-between gap-4">
           <div className="flex items-start gap-3.5">
-            <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 shrink-0 shadow-2xs mt-0.5">
-              {session.isCompleted ? (
+            <div className={`relative flex items-center justify-center w-12 h-12 rounded-2xl border shrink-0 shadow-2xs mt-0.5 ${
+              session.isError
+                ? 'bg-amber-50 text-amber-600 border-amber-200'
+                : 'bg-emerald-50 text-emerald-600 border-emerald-200'
+            }`}>
+              {session.isError ? (
+                <Clock className="w-6 h-6 text-amber-600 animate-pulse" />
+              ) : session.isCompleted ? (
                 <CheckCircle2 className="w-6 h-6 text-emerald-600 animate-in zoom-in" />
               ) : (
                 <>
@@ -161,11 +182,13 @@ export default function ProspectingProgressModal({
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-1.5">
                 <span className={`px-2.5 py-0.5 rounded-lg text-xs font-bold border ${
-                  session.isCompleted 
-                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200' 
-                    : 'bg-emerald-50 text-emerald-700 border-emerald-200 animate-pulse'
+                  session.isError
+                    ? 'bg-amber-100 text-amber-800 border-amber-200'
+                    : session.isCompleted 
+                      ? 'bg-emerald-100 text-emerald-800 border-emerald-200' 
+                      : 'bg-emerald-50 text-emerald-700 border-emerald-200 animate-pulse'
                 }`}>
-                  {session.isCompleted ? '✅ Prospecting Completed' : 'AI Prospecting Engine Active'}
+                  {session.isError ? '⏳ Running in Background' : session.isCompleted ? '✅ Prospecting Completed' : 'AI Prospecting Engine Active'}
                 </span>
                 <span className="text-xs text-slate-500 font-medium">
                   Target: {session.targetLeadCount} verified records
@@ -181,15 +204,17 @@ export default function ProspectingProgressModal({
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              type="button"
-              onClick={onMinimize}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-              title="Minimize to background"
-            >
-              <Minimize2 className="w-4 h-4" />
-            </button>
-            {session.isCompleted && (
+            {!session.isError && (
+              <button
+                type="button"
+                onClick={onMinimize}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                title="Minimize to background"
+              >
+                <Minimize2 className="w-4 h-4" />
+              </button>
+            )}
+            {(session.isCompleted || session.isError) && (
               <button
                 type="button"
                 onClick={onClose}
@@ -204,51 +229,66 @@ export default function ProspectingProgressModal({
 
         {/* Modal Body */}
         <div className="p-6 sm:p-7 space-y-6">
-          {/* Real-time Status Banner */}
-          <div className={`p-4 rounded-2xl border transition-all ${
-            session.isCompleted 
-              ? 'bg-emerald-50/80 border-emerald-200' 
-              : 'bg-slate-50 border-slate-200'
-          }`}>
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                  <Sparkles className={`w-3.5 h-3.5 ${session.isCompleted ? 'text-emerald-600' : 'text-amber-500'}`} />
-                  <span>{stageHeadline}</span>
+          {session.isError ? (
+            <div className="p-5 rounded-2xl border bg-amber-50/80 border-amber-200 space-y-2 text-left">
+              <div className="flex items-center gap-2 text-xs font-bold text-amber-950">
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>Search Status Notice</span>
+              </div>
+              <p className="text-xs text-amber-900 leading-relaxed font-normal">
+                {session.errorMessage || 'The automated discovery engine is taking longer than expected. Your search is continuing in the background, and new prospects will appear in your campaign table.'}
+              </p>
+              <p className="text-[11px] text-amber-700 leading-relaxed pt-1">
+                You can keep this window open to wait, or close it and review your leads table directly.
+              </p>
+            </div>
+          ) : (
+            /* Real-time Status Banner */
+            <div className={`p-4 rounded-2xl border transition-all ${
+              session.isCompleted 
+                ? 'bg-emerald-50/80 border-emerald-200' 
+                : 'bg-slate-50 border-slate-200'
+            }`}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    <Sparkles className={`w-3.5 h-3.5 ${session.isCompleted ? 'text-emerald-600' : 'text-amber-500'}`} />
+                    <span>{stageHeadline}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    {stageDescription}
+                  </p>
                 </div>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  {stageDescription}
-                </p>
+
+                <div className="text-right shrink-0">
+                  <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                    Duration
+                  </div>
+                  <div className="text-sm font-mono font-extrabold text-slate-800">
+                    {formatTime(seconds)}
+                  </div>
+                </div>
               </div>
 
-              <div className="text-right shrink-0">
-                <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                  Duration
+              {/* Dynamic Progress Bar */}
+              <div className="mt-4 pt-1">
+                <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 mb-1.5">
+                  <span>Discovery Progress</span>
+                  <span className="font-mono text-emerald-700">{progressPercent}%</span>
                 </div>
-                <div className="text-sm font-mono font-extrabold text-slate-800">
-                  {formatTime(seconds)}
+                <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full transition-all duration-500 ease-out rounded-full ${
+                      session.isCompleted 
+                        ? 'bg-emerald-600' 
+                        : 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                    }`}
+                    style={{ width: `${progressPercent}%` }}
+                  />
                 </div>
               </div>
             </div>
-
-            {/* Dynamic Progress Bar */}
-            <div className="mt-4 pt-1">
-              <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 mb-1.5">
-                <span>Discovery Progress</span>
-                <span className="font-mono text-emerald-700">{progressPercent}%</span>
-              </div>
-              <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full transition-all duration-500 ease-out rounded-full ${
-                    session.isCompleted 
-                      ? 'bg-emerald-600' 
-                      : 'bg-gradient-to-r from-emerald-500 to-teal-500'
-                  }`}
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* Business Prospecting Milestones (Client-Friendly, No Technical Terms) */}
           <div className="space-y-2.5">
@@ -326,12 +366,12 @@ export default function ProspectingProgressModal({
                   }`}>
                     {currentStage >= 4 ? '✓' : '4'}
                   </div>
-                  <span>4. Database Registration</span>
+                  <span>4. Finalizing & Saving Prospects</span>
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1 pl-6">
                   {session.isCompleted 
-                    ? 'Records saved to your database table!' 
-                    : 'Awaiting new records in database'}
+                    ? 'Verified prospects are ready in your campaign!' 
+                    : 'Adding qualified leads to your campaign...'}
                 </p>
               </div>
             </div>
@@ -341,18 +381,30 @@ export default function ProspectingProgressModal({
         {/* Modal Action Footer */}
         <div className="p-5 sm:p-6 bg-slate-50/80 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="text-xs text-slate-500">
-            {session.isCompleted ? (
+            {session.isError ? (
+              <span className="text-amber-800 font-medium">
+                Discovery search is running in the background.
+              </span>
+            ) : session.isCompleted ? (
               <span className="text-emerald-700 font-bold flex items-center gap-1.5">
                 <Check className="w-4 h-4 stroke-[3]" />
-                Results are saved and ready in your leads table.
+                Verified prospects are ready in your campaign list.
               </span>
             ) : (
-              <span>This window will automatically finish once results are recorded in the database.</span>
+              <span>This window will automatically complete once verified prospects are recorded.</span>
             )}
           </div>
 
           <div className="flex items-center gap-2">
-            {!session.isCompleted ? (
+            {session.isError ? (
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
+              >
+                Close Window
+              </button>
+            ) : !session.isCompleted ? (
               <button
                 type="button"
                 onClick={onMinimize}

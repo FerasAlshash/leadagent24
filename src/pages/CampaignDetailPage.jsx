@@ -122,27 +122,7 @@ const resolveSocialLinks = (lead) => {
   };
 };
 
-// Platform standard Tone Options
-const TONE_OPTIONS = [
-  { 
-    id: 'Professional', 
-    label: 'Professional', 
-    subtitle: 'Corporate, ROI-focused & formal tone',
-    badge: 'Recommended'
-  },
-  { 
-    id: 'Friendly', 
-    label: 'Friendly', 
-    subtitle: 'Warm, personable & conversational tone',
-    badge: 'High Engagement'
-  },
-  { 
-    id: 'Direct', 
-    label: 'Direct', 
-    subtitle: 'Concise, value-first & brief pitch',
-    badge: 'Fast Read'
-  }
-];
+import { TONE_OPTIONS, findToneOption } from '../data/emailTones';
 
 export default function CampaignDetailPage({
   campaign,
@@ -189,7 +169,9 @@ export default function CampaignDetailPage({
         setProspectingSession(prev => prev ? {
           ...prev,
           newLeadsFound: diff,
-          isCompleted: true
+          isCompleted: true,
+          isError: false,
+          errorMessage: null
         } : null);
       }
     }
@@ -220,7 +202,9 @@ export default function CampaignDetailPage({
             setProspectingSession(prev => prev ? {
               ...prev,
               newLeadsFound: diff,
-              isCompleted: true
+              isCompleted: true,
+              isError: false,
+              errorMessage: null
             } : null);
           }
         }
@@ -1814,7 +1798,7 @@ export default function CampaignDetailPage({
 
             {/* Modal Form */}
             <form
-              onSubmit={async (e) => {
+              onSubmit={(e) => {
                 e.preventDefault();
                 if (!isOutboundConfigured) {
                   setIsSearchModalOpen(false);
@@ -1826,37 +1810,54 @@ export default function CampaignDetailPage({
                 initialLeadsCountRef.current = currentCount;
                 const targetNumber = Number(searchParams.lead_number) || 5;
 
+                // 1. Immediately close the search configuration modal
                 setIsSearchModalOpen(false);
 
-                try {
-                  if (onLaunchSearch) {
-                    await onLaunchSearch({
-                      campaign_id: campaign.id,
-                      campaign_title: campaign.title,
-                      "Business Type": searchParams.business_type,
-                      "Location": searchParams.location,
-                      "Lead Number": targetNumber,
-                      "Email Style": searchParams.email_style,
-                      "Your Name": campaign.sender_name || 'Alex',
-                      "Your Company/Agency Name": campaign.company_name || campaign.title,
-                      "What does your company do?": campaign.company_pitch || ''
-                    });
-                  }
+                // 2. Immediately open the Live Prospecting Progress Modal!
+                setProspectingSession({
+                  isActive: true,
+                  startTime: Date.now(),
+                  initialLeadCount: currentCount,
+                  targetLeadCount: targetNumber,
+                  targetQuery: searchParams.business_type,
+                  targetLocation: searchParams.location,
+                  newLeadsFound: 0,
+                  isCompleted: false,
+                  isMinimized: false,
+                  isError: false,
+                  errorMessage: null
+                });
 
-                  // ONLY start live prospecting session modal AFTER launch succeeds!
-                  setProspectingSession({
-                    isActive: true,
-                    startTime: Date.now(),
-                    initialLeadCount: currentCount,
-                    targetLeadCount: targetNumber,
-                    targetQuery: searchParams.business_type,
-                    targetLocation: searchParams.location,
-                    newLeadsFound: 0,
-                    isCompleted: false,
-                    isMinimized: false
+                // 3. Dispatch the search API call in background with error handling
+                if (onLaunchSearch) {
+                  onLaunchSearch({
+                    campaign_id: campaign.id,
+                    campaign_title: campaign.title,
+                    "Business Type": searchParams.business_type,
+                    "Location": searchParams.location,
+                    "Lead Number": targetNumber,
+                    "Email Style": searchParams.email_style,
+                    "Your Name": campaign.sender_name || 'Alex',
+                    "Your Company/Agency Name": campaign.company_name || campaign.title,
+                    "What does your company do?": campaign.company_pitch || ''
+                  }).catch(err => {
+                    console.warn('Search dispatch background notice:', err);
+                    // Do NOT display error if leads are already found, session completed, or if it is already scraping in background
+                    setProspectingSession(prev => {
+                      if (!prev || prev.isCompleted || (prev.newLeadsFound && prev.newLeadsFound > 0)) {
+                        return prev;
+                      }
+                      // If request took > 20s, n8n/Apify is actively processing leads in background
+                      if (Date.now() - prev.startTime > 20000) {
+                        return prev; // Keep waiting for database records
+                      }
+                      return {
+                        ...prev,
+                        isError: true,
+                        errorMessage: 'The prospecting service is taking longer than usual to acknowledge. Your search is continuing in the background.'
+                      };
+                    });
                   });
-                } catch (err) {
-                  console.error('Launch failed:', err);
                 }
               }}
               className="p-5 sm:p-6 space-y-4"
@@ -1941,10 +1942,10 @@ export default function CampaignDetailPage({
                     <div className="flex items-center gap-2 truncate">
                       <MessageSquare className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                       <span className="font-bold text-slate-900">
-                        {TONE_OPTIONS.find(t => t.id === searchParams.email_style)?.label || searchParams.email_style || 'Professional'}
+                        {findToneOption(searchParams.email_style).label}
                       </span>
                       <span className="text-[11px] text-slate-400 truncate hidden sm:inline">
-                        • {TONE_OPTIONS.find(t => t.id === searchParams.email_style)?.subtitle || 'Corporate, ROI-focused'}
+                        • {findToneOption(searchParams.email_style).subtitle}
                       </span>
                     </div>
                     <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 ml-2 transition-transform ${isSearchToneOpen ? 'rotate-180' : ''}`} />

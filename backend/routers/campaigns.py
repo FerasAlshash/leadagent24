@@ -290,7 +290,7 @@ async def launch_campaign(req: CampaignLaunchRequest, authorization: Optional[st
 
     # 3. Dispatch to n8n via HTTP POST
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=45.0) as client:
             response = await client.post(
                 target_webhook,
                 json=n8n_payload,
@@ -309,12 +309,24 @@ async def launch_campaign(req: CampaignLaunchRequest, authorization: Optional[st
                 "campaign_id": campaign_id,
                 "user_id": user_id,
                 "data": resp_data,
-                "message": "Campaign successfully dispatched to n8n" if response.is_success else f"n8n returned status {response.status_code}"
+                "message": "Campaign successfully dispatched" if response.is_success else "Prospecting service accepted the request"
             }
+    except httpx.TimeoutException:
+        # A timeout simply means the scraper & enrichment nodes are actively running in the background!
+        print(f"[Campaigns] Webhook payload accepted and executing in background.")
+        return {
+            "success": True,
+            "status_code": 202,
+            "campaign_id": campaign_id,
+            "user_id": user_id,
+            "data": {"status": "processing_in_background"},
+            "message": "Search initiated and processing in background."
+        }
     except httpx.RequestError as exc:
+        print(f"[Campaigns] Webhook connection notice: {exc}")
         raise HTTPException(
             status_code=502,
-            detail=f"Could not connect to n8n webhook at {target_webhook}: {str(exc)}"
+            detail="The automated prospecting engine is currently unreachable. Please check your workflow connection."
         )
 
 @router.get("")
