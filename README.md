@@ -21,7 +21,10 @@ A modern, full-stack B2B SaaS platform that automates the entire outbound sales 
 - **Geospatial & B2B Lead Scraper:** Target businesses by industry, location, and volume using high-speed crawlers.
 - **Deep Contact Enrichment:** Scrapes corporate websites to extract primary business email addresses, direct phone numbers, and official social media handles.
 - **AI Data Extraction & Verification:** Evaluates discovered emails and prioritizes departmental inboxes (`info@`, `contact@`, `sales@`) over generic noise.
-- **Personalized Outbound Outreach:** Generates tailored cold pitch emails and dispatches them automatically through workflow pipelines.
+- **Per-Campaign Outbound Email Infrastructure (BYOK Vault):** Connect Resend, Brevo, SendGrid, or Custom SMTP per campaign. API keys are stored securely with live connection diagnostics, test email sending, and domain SPF/DKIM verification assistance.
+- **Pre-flight Outbound Launch Protection:** Prevents triggering search or prospecting until outbound email credentials and sender identity are verified and configured.
+- **Real-Time Prospecting Milestone Tracker:** Live tracking modal monitoring the 4 key discovery stages (Scraping, Contact Enrichment, AI Email Pitch Generation, Lead Registration) backed by resilient database polling and background minimization.
+- **Unified 5-Tone Copywriting Engine:** Standardized cold outreach styles (`Professional`, `Casual`, `Urgent`, `Consultative`, `Creative`) with badges and descriptions available across campaign creation, settings, and launch.
 - **Interactive Email Preview Modal:** Inspect exact outbound subject lines, email bodies, dispatch timestamps, and status badges directly within campaign workspaces.
 - **Interactive Analytics Dashboard:** Real-time metrics grid tracking discovery rates, dispatch percentages, and conversion timelines.
 - **Live Event Audit Feed:** Chronological transaction log recording every search, extraction, and outbound communication event.
@@ -41,13 +44,14 @@ A modern, full-stack B2B SaaS platform that automates the entire outbound sales 
              ▼                                           ▼
    [ FastAPI Backend ]                           [ n8n Automation Engine ]
    (Port 8000 REST API)                         (Webhook: lead-machine)
-             │                                           │
-             │                                           ▼
-             │                                   [ Apify Cloud API ]
+   ├── Auth & Vault Creds                                │
+   ├── Outbound Integrations                             ▼
+   └── Campaigns & Leads                         [ Apify Cloud API ]
              │                               (compass~crawler-google-places)
-             ▼                                           │
-   [ Supabase PostgreSQL ] ◄─────────────────────────────┘
-  (Auth, RLS, Realtime DB)
+             │                                           │
+             ▼                                           ▼
+   [ Supabase PostgreSQL ] ◄────────────── [ Outbound Email Providers ]
+  (Auth, Vault, Realtime DB)               (Resend, Brevo, SendGrid, SMTP)
 ```
 
 ---
@@ -57,7 +61,13 @@ A modern, full-stack B2B SaaS platform that automates the entire outbound sales 
 ```text
 automate-lead-generation/
 ├── backend/                   # FastAPI application
-│   ├── routers/               # API endpoints (leads, campaigns, auth, admin)
+│   ├── routers/               # API endpoints (leads, campaigns, email_integrations, auth, admin)
+│   │   ├── email_integrations.py # BYOK email providers, vault credentials & live testing
+│   │   ├── campaigns.py       # Campaign management & launch dispatch
+│   │   ├── leads.py           # Lead enrichment & verification
+│   │   ├── webhook.py         # n8n webhook receiver & callbacks
+│   │   └── admin.py           # Admin health diagnostics & audit logs
+│   ├── schema_campaign_email_integrations.sql # SQL migration for vault & integrations
 │   ├── config.py              # Environment configuration & settings
 │   ├── database.py            # Supabase client integration
 │   ├── main.py                # Application entrypoint & CORS middleware
@@ -69,10 +79,11 @@ automate-lead-generation/
 ├── public/                    # Static assets & icons
 ├── src/                       # React frontend source code
 │   ├── assets/                # Images & SVGs
-│   ├── components/            # UI components (modals, tables, analytics)
+│   ├── components/            # UI components (CampaignModal, ProspectingProgressModal, tables)
 │   ├── context/               # Authentication & global application state
+│   ├── data/                  # Static constants & unified email tones (emailTones.js)
 │   ├── lib/                   # Supabase client setup
-│   ├── pages/                 # Route pages (Dashboard, Campaigns, Audit Log)
+│   ├── pages/                 # Route pages (Dashboard, Campaigns, CampaignSettings, Audit Log)
 │   └── utils/                 # Validation & string parsers
 ├── .env.example               # Frontend environment template
 ├── .gitignore                 # Protected secrets & artifact exclusion rules
@@ -92,7 +103,13 @@ automate-lead-generation/
 
 ---
 
-### 1. Environment Configuration
+### 1. Database Schema Setup
+Run the SQL migration script in your **Supabase SQL Editor** to initialize the Vault and Campaign Integrations tables:
+- Execute `backend/schema_campaign_email_integrations.sql`
+
+---
+
+### 2. Environment Configuration
 
 #### Frontend Environment:
 Create a `.env` file in the project root:
@@ -122,7 +139,7 @@ PORT=8000
 
 ---
 
-### 2. Frontend Setup
+### 3. Frontend Setup
 
 ```bash
 # Install dependencies
@@ -135,7 +152,7 @@ The application will be accessible at `http://localhost:5173`.
 
 ---
 
-### 3. Backend Setup
+### 4. Backend Setup
 
 ```bash
 # Navigate to backend and install requirements
@@ -148,7 +165,7 @@ API documentation and Swagger UI will be available at `http://127.0.0.1:8000/doc
 
 ---
 
-### 4. Workflow Engine (n8n) Setup
+### 5. Workflow Engine (n8n) Setup
 1. Launch or self-host your n8n workflow engine instance.
 2. Configure a webhook node to listen on `/webhook/lead-machine`.
 3. Provide the webhook URL in `backend/.env` under `N8N_WEBHOOK_URL`.
