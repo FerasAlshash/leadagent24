@@ -1,4 +1,4 @@
-# LeadAgent SaaS — Architecture, Overview & Strategic Roadmap
+# LeadAgent SaaS: Architecture, Overview & Strategic Roadmap
 ### Autonomous B2B Lead Generation, Deep Contact Enrichment & AI Cold Outreach
 
 ---

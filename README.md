@@ -1,4 +1,4 @@
-# LeadAgent — Autonomous B2B Lead Generation & AI Outreach Platform
+# LeadAgent: Autonomous B2B Lead Generation & AI Outreach Platform
 
 [![React 19](https://img.shields.io/badge/React-19.0-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-6.0-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
