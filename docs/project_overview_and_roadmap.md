@@ -1,152 +1,167 @@
-# دليل وثائقي شامل: نظام أتمتة توليد العملاء والتواصل بالذكاء الاصطناعي
-### Automate Lead Generation SaaS Platform — Overview, Architecture & Roadmap
+# LeadAgent SaaS — Architecture, Overview & Strategic Roadmap
+### Autonomous B2B Lead Generation, Deep Contact Enrichment & AI Cold Outreach
 
 ---
 
-## 1. ما هو هذا المشروع؟ (Project Overview)
+## 1. Project Overview & Mission
 
-**Automate Lead Generation SaaS** هو منصة برمجيات كخدمة (**B2B SaaS**) متكاملة ومؤتمتة بالكامل، تهدف إلى حل أكبر تحدٍ يواجه الشركات وفرق المبيعات والتسويق: **البحث اليدوي الشاق والمكلف عن العملاء المحتملين (Lead Prospecting) والتواصل البارد معهم (Cold Outreach).**
+**LeadAgent** is an enterprise-grade, full-stack **B2B SaaS platform** engineered to solve the most labor-intensive and costly bottleneck in sales development: **manual prospecting and cold email outreach**.
 
-بدلاً من قضاء ساعات طويلة في البحث على خرائط جوجل، ثم نسخ أرقام الهواتف، ثم البحث في مواقع الشركات عن الإيميلات، ثم كتابة رسائل فردية؛ يقوم هذا النظام بتحويل العملية بأكملها إلى **خط إنتاج سحابي ذكي ومؤتمت من البداية إلى النهاية (Autonomous Lead Machine)**:
-1. يحدد المستخدم النشاط التجاري والمدينة والعدد المطلوب.
-2. يتولى النظام خلال دقائق سحب الشركات، استخراج وسائل التواصل الرسمية، التحقق من الإيميلات، صياغة بريد تسويقي مخصص لكل شركة بالذكاء الاصطناعي، وإرساله فورياً أو جدولته.
-3. يوفر لوحة تحكم تفاعلية متطورة لإدارة الحملات، معاينة كل إيميل تم إرساله، وتحليل النتائج لحظياً.
-
----
-
-## 2. كونه نظام SaaS سحابي متكامل (Multi-Tenant SaaS Architecture)
-
-تم تصميم النظام معمارياً كمنصة **SaaS جاهزة للنمو والاشتراكات التجارية**:
-- **تعدد المستخدمين والمؤسسات (Multi-Tenancy):** يمتلك كل مستخدم أو شركة مساحة عمل خاصة بها.
-- **أمان البيانات وعزل السجلات (Row Level Security - RLS):** البيانات مشفرة ومحمية على مستوى قاعدة بيانات PostgreSQL في **Supabase**، بحيث لا يرى أي مستخدم حملات أو عملاء المستخدمين الآخرين.
-- **إدارة الحسابات والصلاحيات (Auth & Roles):** تسجيل دخول آمن بالبريد وكلمة المرور، إدارة الملف التعريفي، ولوحة تحكم خاصة بالمسؤولين (**Admin Console**) لمراقبة سلامة النظام والـ Webhooks ومعدلات الاستهلاك.
-- **جاهزية التوسع والاستضافة (Cloud & VPS Ready):** واجهة خفيفة سريعة، باك إند خفيف عالي الكفاءة، ومحرك أتمتة يمكن استضافته ذاتياً بدون تكاليف إضافية.
+Rather than spending hours manually searching Google Maps, copying phone numbers, hunting for verified executive inboxes across corporate websites, and writing individual pitch emails, LeadAgent transforms this entire pipeline into an **Autonomous Outbound Machine**:
+1. **Target Definition:** Users specify their desired business niche, geographical market (city, country), and lead target volume.
+2. **Autonomous Extraction & Verification:** The system crawls Google Places, visits corporate websites to extract primary inboxes (`info@`, `contact@`, `sales@`), phone numbers, and official social media handles (LinkedIn, Instagram, Facebook), filtering out generic noise.
+3. **AI Copywriting & Multi-Provider Dispatch:** Automatically synthesizes high-converting, personalized cold pitch emails and dispatches them through the user's configured email infrastructure (Resend, Brevo, SendGrid, or Custom SMTP).
+4. **Interactive Command Center:** Provides real-time campaign oversight, an interactive email preview modal, audit logging, and delivery analytics.
 
 ---
 
-## 3. كيف يعمل النظام؟ (How It Works & Pipeline Flow)
+## 2. Multi-Tenant SaaS Architecture
 
-يعتمد النظام على تكامل محكم بين 5 مكونات تقنية رئيسية:
-- **الواجهة الأمامية (Frontend):** React 19 + Vite + Tailwind CSS (تصميم عصري سريع وتفاعلي).
-- **الباك إند (Backend API):** FastAPI (Python 3.12) لمعالجة الحملات والعملاء والتواصل مع قاعدة البيانات.
-- **محرك الأتمتة (Workflow Engine):** خادم **n8n** لمعالجة التدفقات واستقبال الـ Webhooks.
-- **محرك الكشط والإثراء (Scraping & Enrichment):** ممثل **Apify** لخرائط جوجل ومواقع الشركات.
-- **قاعدة البيانات والتوثيق (Database & Auth):** **Supabase** (PostgreSQL).
+LeadAgent is architected from the ground up as a scalable, subscription-ready commercial SaaS:
+- **Workspace Multi-Tenancy:** Each customer operates within an isolated workspace with dedicated campaigns, credentials, and prospect records.
+- **Row-Level Security (RLS):** Governed by Supabase PostgreSQL RLS policies ensuring strict data segregation across tenant boundaries.
+- **Role-Based Authentication & Profiles:** Secure authentication via Supabase Auth (JWT bearer sessions), password validation, and a dedicated **Admin Console** for platform health monitoring.
+- **Cloud & Self-Hosting Flexibility:** Designed for seamless deployment on standard Ubuntu VPS servers (Hetzner, DigitalOcean) using Docker Compose, Nginx reverse proxy, and Let's Encrypt SSL.
+
+---
+
+## 3. End-to-End Pipeline Architecture
 
 ```text
-               ┌──────────────────────────────────────────────┐
-               │ 1. لوحة تحكم المستخدم (React UI)             │
-               │ يدخل: النشاط (مثل: Clinics) + المدينة (Dubai)│
-               └──────────────────────┬───────────────────────┘
-                                      │ Webhook Trigger
-                                      ▼
-               ┌──────────────────────────────────────────────┐
-               │ 2. محرك الأتمتة (n8n Workflow)              │
-               │ يستقبل الطلب ويبدأ التنسيق بين الخدمات       │
-               └──────────────────────┬───────────────────────┘
-                                      │ API Call
-                                      ▼
-               ┌──────────────────────────────────────────────┐
-               │ 3. محرك الكشط والإثراء (Apify Crawler)       │
-               │ - كشط الأنشطة التجارية من Google Places      │
-               │ - فتح مواقع الشركات وسحب جهات الاتصال        │
-               │   (Emails, LinkedIn, Instagram, Facebook)    │
-               └──────────────────────┬───────────────────────┘
-                                      │ Raw Results
-                                      ▼
-               ┌──────────────────────────────────────────────┐
-               │ 4. استخراج وتنقية البيانات بالذكاء الاصطناعي │
-               │ Information Extractor: تنقية الإيميل الأفضل  │
-               │ وفلترة الروابط وتنسيق بيانات الشركات         │
-               └──────────────────────┬───────────────────────┘
-                                      │ Validated Leads
-                                      ▼
-               ┌──────────────────────────────────────────────┐
-               │ 5. صياغة وإرسال البريد المخصص (AI Outreach)  │
-               │ توليد محتوى بريدي ذكي موجه لكل شركة وإرساله │
-               └──────────────────────┬───────────────────────┘
-                                      │ Real-time Sync
-                                      ▼
-               ┌──────────────────────────────────────────────┐
-               │ 6. التخزين والعرض اللحظي (Supabase & UI)     │
-               │ حفظ السجلات، وتحديث بطاقات الحملة وإحصائياتها│
-               │ مع إتاحة زر "Preview" لمعاينة كل إيميل مرسل │
-               └──────────────────────────────────────────────┘
+ ┌──────────────────────────────────────────────────────────┐
+ │ 1. React 19 Frontend Dashboard                           │
+ │ User specifies: Target Niche (e.g. Clinics) + City (e.g. Dubai) │
+ └────────────────────────────┬─────────────────────────────┘
+                              │ HTTPS / JWT Bearer
+                              ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │ 2. FastAPI Backend & Pre-Flight Validation               │
+ │ - Validates campaign parameters & sender credentials     │
+ │ - Dispatches launch payload to workflow webhook          │
+ └────────────────────────────┬─────────────────────────────┘
+                              │ Webhook Payload
+                              ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │ 3. n8n Automation Engine                                 │
+ │ Orchestrates crawler agents and enrichment tasks         │
+ └────────────────────────────┬─────────────────────────────┘
+                              │ API Trigger
+                              ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │ 4. Apify Cloud Crawler (compass~crawler-google-places)   │
+ │ - Scrapes targeted businesses & Google Maps metadata     │
+ │ - Deep-crawls corporate websites for emails & socials    │
+ └────────────────────────────┬─────────────────────────────┘
+                              │ Raw Crawled Data
+                              ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │ 5. AI Information Extraction & Email Generation          │
+ │ - Cleans, prioritizes, and verifies contact inboxes      │
+ │ - Crafts tailored pitch emails matching selected tone    │
+ └────────────────────────────┬─────────────────────────────┘
+                              │ Verified Prospect Payload
+                              ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │ 6. Outbound Dispatch & Database Registration             │
+ │ - Sends email via campaign's configured provider         │
+ │ - Stores records in Supabase PostgreSQL (leads table)    │
+ │ - Real-time UI synchronization via database polling      │
+ └──────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 4. الميزات الحالية التي يقدمها النظام (Current Core Features)
+## 4. Current Core Capabilities
 
-1. **محرك الاستكشاف الذكي (Lead Scraper Engine):**
-   - سحب الشركات بناءً على الكلمات المفتاحية، الدولة، والمدينة بدقة عالية.
-   - كشف أرقام الهواتف، العناوين، والتقييمات وعدد المراجعات.
-2. **الإثراء التلقائي للبيانات (Deep Contact Enrichment):**
-   - فحص المواقع لاستخراج عناوين البريد الإلكتروني الرسمية.
-   - استخراج حسابات التواصل الاجتماعي: **LinkedIn**, **Instagram**, **Facebook**.
-3. **أتمتة التواصل البارد (Automated Cold Outreach):**
-   - توليد عناوين رسائل ومحتوى تسويقي احترافي مخصص لكل عميل.
-   - تسجيل حالة الإرسال وتوثيق وقت الإرسال الفعلي بدقة (`SEND_Time`).
-4. **مركز معاينة الرسائل المرسلة المدمج (Sent Email Preview Modal):**
-   - نافذة تفاعلية منبثقة تتيح للمستخدم قراءة نص وعنوان كل إيميل تم إرساله لأي عميل.
-   - إمكانية نسخ البريد أو نص الرسالة بالكامل بنقرة زر واحدة.
-   - عرض حالة الإرسال بدقة مع شارات بصرية نظيفة (`Sent` / `Verified`).
-5. **لوحة تحليلات وإحصائيات متقدمة (Analytics & Metrics Grid):**
-   - معدل نجاح اكتشاف الإيميلات (Email Discovery Rate).
-   - نسبة الإرسال الفعلي (Outreach Dispatch Rate).
-   - رسوم بيانية تفاعلية لتوزيع العملاء جغرافياً وحسب النشاط والوقت.
-6. **سجل تدقيق مباشر (Live Audit Log):**
-   - جدول زمني لكل العمليات التي تتم في النظام لحظة بلحظة مع إمكانية الفلترة والبحث.
-7. **لوحة تحكم إدارية ومراقبة الـ Webhooks (Admin Console):**
-   - فحص جاهزية الاتصال مع n8n بميزة Ping المباشرة.
-   - إحصائيات عامة عن نشاط المنصة ومعدل استهلاك الموارد.
+### 1. Geospatial & B2B Lead Discovery
+- High-precision search across global cities, categories, and business types.
+- Scrapes verified names, phone numbers, complete street addresses, average ratings, and review counts.
 
----
+### 2. Deep Multi-Channel Contact Enrichment
+- Automatically crawls business websites to discover official departmental email addresses.
+- Extracts official social media profiles (**LinkedIn**, **Instagram**, **Facebook**) for multi-touch follow-ups.
 
-## 5. مراحل التوسع القادمة ورؤية التطوير (Future Roadmap)
+### 3. Per-Campaign Outbound Email Infrastructure (BYOK Vault)
+- **Bring Your Own Key (BYOK):** Dedicated outbound email settings per campaign supporting **Resend**, **Brevo**, **SendGrid**, and **Custom SMTP**.
+- **Secure Key Vault:** Encrypted credential storage with live API key and SMTP connection testing (`Test Email Connection`).
+- **Domain Verification Guidance:** Interactive diagnostics modal providing step-by-step SPF, DKIM, and DMARC verification instructions.
 
-لتحويل النظام إلى منصة تجارية رائدة تنافس المنصات العالمية مثل Instantly و Lemlist و Apollo، تم تخطيط مراحل التوسع التالية:
+### 4. Pre-Flight Launch Protection
+- Outbound prospecting searches are automatically safeguarded: searches cannot be initiated without an active, verified email provider, preventing failed delivery attempts.
 
-### المرحلة الأولى: ربط حسابات البريد الرسمية للشركات (BYOE: Bring Your Own Email)
-- **المشكلة الحالية:** يتم الإرسال حالياً من خادم بريد موحد عبر سير عمل n8n.
-- **التطوير القادم:**
-  - تمكين كل شركة أو مستخدم من **ربط خادم البريد الخاص بنطاقه الرسمي** من داخل إعدادات حسابه في المنصة:
-    1. **منصات إرسال البريد السحابية (API-based Providers):**
-       - **SendGrid API** (إرسال موثوق مع حماية سمعة النطاق).
-       - **Mailgun API** (إدارة متقدمة للتحقق من العناوين وسجلات التسليم).
-       - **Amazon SES** (أقل تكلفة لإرسال ملايين الرسائل مع موثوقية AWS).
-       - **Resend** (خيار عصري ومثالي لمطوري SaaS).
-    2. **البريد المؤسسي المباشر (Google Workspace & Microsoft 365):**
-       - ربط مباشر عبر OAuth 2.0 لإرسال الإيميلات كأنها مكتوبة يدوياً من حساب Gmail أو Outlook الخاص بمندوب المبيعات.
-    3. **خوادم SMTP / IMAP الخاصة:**
-       - إمكانية إدخال إعدادات خادم البريد المخصص لأي شركة.
+### 5. Real-Time Prospecting Milestone Tracker
+- Live modal monitoring the 4 key discovery stages:
+  1. **Locating Businesses** (Google Places crawler)
+  2. **Enriching Contacts** (Website scraping for emails & socials)
+  3. **Crafting Personalized AI Emails** (Dynamic copywriting)
+  4. **Finalizing & Saving Prospects** (PostgreSQL registration)
+- Uses real-time database polling instead of arbitrary timeouts, supporting background minimization while jobs run.
 
-### المرحلة الثانية: حماية سمعة النطاق وتسخين الإيميلات (Domain Health & Warm-up)
-- **تدوير الحسابات (Inbox Rotation):** إذا كان لدى الشركة 3 إيميلات مبيعات، يقوم النظام بتوزيع الإرسال بالتساوي لتجنب تصنيفها كـ Spam.
-- **تحديد حدود الإرسال اليومية (Daily Sending Limits):** ضبط حد أقصى (مثل 50 إيميل يومياً لكل حساب) لحماية النطاق.
-- **فحص صحة السجلات البريدية:** التحقق التلقائي من إعدادات **SPF**, **DKIM**, **DMARC** لكل دومين قبل السماح ببدء الحملات.
+### 6. Unified 5-Tone Copywriting Engine
+- Standardized cold outreach styles available across creation, settings, and prospecting dispatch:
+  - **Professional** (`Recommended`) — Corporate, ROI-focused
+  - **Casual** (`High Engagement`) — Warm, conversational
+  - **Urgent** (`Fast Read`) — Direct, action-driven
+  - **Consultative** (`Advisory`) — Partnership & value-first
+  - **Creative** (`Standout`) — Punchy, memorable pitch
 
-### المرحلة الثالثة: سلاسل المتابعة التلقائية وتتبع التفاعل (Drip Sequences & Tracking)
-- **سلاسل المتابعة الذكية (Multi-Step Sequences):**
-  - إرسال الإيميل الأول في اليوم 1.
-  - إذا لم يفتح العميل الإيميل أو لم يرد بعد 3 أيام ➔ إرسال متابعة تلقائية (Follow-up #1).
-  - متابعة أخيرة بعد 7 أيام (Breakup Email).
-- **تتبع التفاعل الفوري (Engagement Tracking):**
-  - كشف مرات فتح الرسالة (Open Tracking).
-  - كشف النقرات على الروابط (Click Tracking).
-- **تصنيف الردود بالذكاء الاصطناعي (AI Reply Classification):**
-  - استقبال رد العميل وتحليله: (مهتم / طلب اجتماع / غير مهتم / بريد خاطئ).
-  - إرسال إشعار فوري لفريق المبيعات على Slack أو Telegram عند وجود عميل مهتم.
+### 7. Interactive Sent Email Preview Modal
+- Inspect exact subject lines, email bodies, dispatch timestamps, and status badges (`Sent` / `Verified`) directly from the campaign leads table.
+- One-click copy for subject lines and email bodies.
 
-### المرحلة الرابعة: بوابات الدفع والتكاملات الخارجية (Monetization & CRM Integrations)
-- **خطط الاشتراكات وبوابات الدفع (Billing & Plans):**
-  - دمج **Stripe** أو **LemonSqueezy** للاشتراكات الشهرية بنظام الحصص (مثال: باقة Starter = 1,000 عميل شهرياً، باقة Pro = 5,000 عميل).
-- **مزامنة الـ CRM بنقرة واحدة:**
-  - تصدير العملاء المهتمين مباشرة إلى **HubSpot**, **Salesforce**, **Pipedrive**, أو **Google Sheets**.
-- **واجهة برمجة تطبيقات عامة (Public REST API):**
-  - تمكين المطورين من استدعاء محرك البحث عن العملاء برمجياً من تطبيقاتهم الخارجية.
+### 8. Analytics & Audit Telemetry
+- Real-time KPI cards: **Email Discovery Rate**, **Outreach Dispatch Rate**, and **Total Leads Acquired**.
+- Chronological, searchable transaction audit log tracking all scraping, enrichment, and dispatch events.
 
 ---
 
-## 6. ملخص القيمة التجارية (Value Proposition)
-هذا المشروع ليس مجرد أداة بحث، بل هو **محرك مبيعات متكامل (All-in-One Growth Machine)** يختصر على الشركات توظيف فرق عمل كاملة للبحث اليدوي، ويجمع بين دقة البيانات، قوة الذكاء الاصطناعي، وسلاسة تجربة الاستخدام في نظام SaaS واحد قابل للتوسع عالمياً.
+## 5. Strategic Development Roadmap
+
+```text
+ ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+ │     PHASE 1     │     │     PHASE 2     │     │     PHASE 3     │     │     PHASE 4     │
+ │  BYOK & Vault   │ ──► │  Domain Health  │ ──► │ Drip Sequences  │ ──► │  Monetization   │
+ │   [COMPLETED]   │     │   & Rotation    │     │ & AI Classifier │     │  & Public API   │
+ └─────────────────┘     └─────────────────┘     └─────────────────┘     └─────────────────┘
+```
+
+### ✅ Phase 1: Bring Your Own Email (BYOK) & Key Vault (COMPLETED)
+- [x] Per-campaign email provider configuration (Resend, Brevo, SendGrid, Custom SMTP).
+- [x] Secure multi-tenant credential vault with real-time test connection diagnostics.
+- [x] Pre-flight launch protection preventing unconfigured prospecting runs.
+- [x] Unified 5-style copywriting tone selection across all platform views.
+- [x] Real-time prospecting milestone tracker with live database polling.
+- [x] In-app custom confirmation modals replacing disruptive browser alerts.
+
+---
+
+### 🔄 Phase 2: Domain Health, Warm-Up & Inbox Rotation (IN PROGRESS)
+- **Multi-Inbox Rotation:** Distribute outbound sending across multiple sender addresses under the same domain to preserve sender reputation.
+- **Daily Dispatch Velocity Throttles:** Configurable sending caps (e.g., 50 emails/day per inbox) to prevent domain blacklisting.
+- **Automated DNS Health Validator:** Real-time query tools verifying **SPF**, **DKIM**, and **DMARC** DNS records prior to campaign execution.
+- **Google Workspace & Microsoft 365 Direct OAuth:** Direct OAuth 2.0 connection enabling sales representatives to send emails directly through their native Gmail or Outlook accounts.
+
+---
+
+### ⏳ Phase 3: Automated Drip Sequences & AI Engagement Intelligence
+- **Multi-Step Drip Sequences:**
+  - Initial outreach on Day 1.
+  - Automated condition-based follow-up on Day 4 if no response is detected.
+  - Final breakup email on Day 8.
+- **Real-Time Engagement Tracking:** Webhook receivers tracking email opens and link click-through rates.
+- **AI Sentiment & Reply Classifier:**
+  - Automatically parses inbound prospect replies: *Interested*, *Meeting Requested*, *Not Interested*, or *Wrong Contact*.
+  - Real-time notifications via **Slack** and **Telegram** webhooks when a positive lead response is detected.
+
+---
+
+### ⏳ Phase 4: Monetization, CRM Ecosystem & Developer API
+- **Subscription Billing & Quotas:** Integrated **Stripe** or **LemonSqueezy** subscription tiers (e.g., Starter: 1,000 leads/mo, Pro: 5,000 leads/mo, Enterprise: unlimited).
+- **One-Click CRM Synchronization:** Native export to **HubSpot**, **Salesforce**, **Pipedrive**, or **Google Sheets**.
+- **Public Developer REST API:** API key-authenticated endpoints enabling external platforms to initiate lead generation and query enrichment data programmatically.
+
+---
+
+## 6. Commercial Value Proposition
+
+LeadAgent is not merely a scraping utility—it is an **All-in-One Autonomous Sales Machine**. By unifying geospatial discovery, deep website contact enrichment, generative AI copywriting, and direct cold email dispatch into a single cohesive SaaS workspace, it eliminates the need for fragmented, expensive sales development tool stacks.
