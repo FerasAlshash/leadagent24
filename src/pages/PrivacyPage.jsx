@@ -142,14 +142,38 @@ export default function PrivacyPage({ onBackToHome, onSignIn, onGetStarted, onNa
             </section>
 
             <section className="space-y-2">
-              <h2 className="text-base font-bold text-slate-900">7. Data Retention & Export</h2>
+              <h2 className="text-base font-bold text-slate-900">7. Cookies & Local Storage Technologies</h2>
+              <p>
+                LeadAgent24 utilizes minimal, strictly necessary browser storage mechanisms (Cookies and HTML5 Local Storage) solely to ensure platform security, maintain your authenticated session, and deliver our core SaaS services.
+              </p>
+              <ul className="list-disc pl-5 space-y-1.5 text-xs sm:text-sm">
+                <li>
+                  <strong>Essential Authentication (JWT):</strong> Secure tokens managed via Supabase Auth stored in client memory or local storage to verify your identity on API requests and protect against unauthorized access.
+                </li>
+                <li>
+                  <strong>Security & CSRF Protection:</strong> Cryptographic validation tokens designed to prevent cross-site request forgery and safeguard your private workspace.
+                </li>
+                <li>
+                  <strong>UI State & Preferences:</strong> Non-sensitive client-side key-value pairs (such as sidebar visibility or active view filters) to provide a fluid, seamless user experience.
+                </li>
+                <li>
+                  <strong>Zero Commercial Ad Tracking:</strong> We do <em>not</em> drop third-party advertising cookies, behavioral retargeting pixels (such as Meta Pixel, TikTok, or Google Ads), or data-broker trackers. We never sell, rent, or monetize your browsing behavior.
+                </li>
+              </ul>
+              <p className="text-xs text-slate-500">
+                You may disable or clear cookies and local storage via your browser settings at any time; however, clearing essential authentication tokens will terminate your active session and require re-signing in.
+              </p>
+            </section>
+
+            <section className="space-y-2">
+              <h2 className="text-base font-bold text-slate-900">8. Data Retention & Export</h2>
               <p>
                 Your qualified leads and audit records remain accessible within your private workspace as long as your account is active. You may export your entire prospect data and telemetry at any time via CSV format. Upon account deletion, all associated private campaign records and encrypted provider keys are permanently erased.
               </p>
             </section>
 
             <section className="space-y-2">
-              <h2 className="text-base font-bold text-slate-900">8. Contact Us</h2>
+              <h2 className="text-base font-bold text-slate-900">9. Contact Us & Compliance Inquiries</h2>
               <p>
                 If you have questions, data protection inquiries, or privacy compliance requests regarding LeadAgent24, please reach out to our team at:
               </p>
