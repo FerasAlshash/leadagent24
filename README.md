@@ -1,4 +1,4 @@
-# LeadAgent: Autonomous B2B Lead Generation & AI Outreach Platform
+# LeadAgent24: Autonomous B2B Prospecting & AI Outbound Engine
 
 [![React 19](https://img.shields.io/badge/React-19.0-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-6.0-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
@@ -159,9 +159,9 @@ The application will be accessible at `http://localhost:5173`.
 pip install -r backend/requirements.txt
 
 # Start the FastAPI server
-python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
+python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 ```
-API documentation and Swagger UI will be available at `http://127.0.0.1:8000/docs`.
+API documentation and Swagger UI will be available at `http://localhost:8000/docs`.
 
 ---
 

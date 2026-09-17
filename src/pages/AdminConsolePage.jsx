@@ -44,7 +44,7 @@ export default function AdminConsolePage({
   const [webhookMode, setWebhookMode] = useState('test'); // 'test' | 'production'
   const [testUrl, setTestUrl] = useState('https://n8n.inexlify.com/webhook-test/lead-machine');
   const [prodUrl, setProdUrl] = useState('https://n8n.inexlify.com/webhook/lead-machine');
-  const [dispatchCallbackUrl, setDispatchCallbackUrl] = useState('http://127.0.0.1:8000/api/campaigns/dispatch-email');
+  const [dispatchCallbackUrl, setDispatchCallbackUrl] = useState('http://192.168.0.236:8000/api/campaigns/dispatch-email');
   const [savingWebhook, setSavingWebhook] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);

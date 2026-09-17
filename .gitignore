@@ -9,6 +9,8 @@ backend/.env
 backend/.env.*
 !backend/.env.example
 backend/email_settings.json
+backend/webhook_settings.json
+!backend/webhook_settings.example.json
 
 # ==========================================
 # 2. Node & Frontend (React / Vite)

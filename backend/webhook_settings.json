@@ -1,7 +1,0 @@
-{
-  "mode": "test",
-  "test_url": "https://n8n.inexlify.com/webhook-test/lead-machine",
-  "production_url": "https://n8n.inexlify.com/webhook/lead-machine",
-  "active_url": "https://n8n.inexlify.com/webhook-test/lead-machine",
-  "dispatch_callback_url": "http://192.168.0.236:8000/api/campaigns/dispatch-email"
-}

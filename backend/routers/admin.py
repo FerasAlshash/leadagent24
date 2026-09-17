@@ -152,7 +152,8 @@ async def get_admin_system_status(admin: Dict[str, Any] = Depends(verify_admin))
             "latency_ms": webhook_latency_ms,
             "mode": webhook_cfg["mode"],
             "test_url": webhook_cfg["test_url"],
-            "production_url": webhook_cfg["production_url"]
+            "production_url": webhook_cfg["production_url"],
+            "dispatch_callback_url": webhook_cfg.get("dispatch_callback_url", "http://127.0.0.1:8000/api/campaigns/dispatch-email")
         },
         "recent_campaigns": all_campaigns[:8],
         "recent_leads": all_leads[:10]

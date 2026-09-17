@@ -1,0 +1,7 @@
+{
+  "mode": "test",
+  "test_url": "https://your-n8n-instance.com/webhook-test/lead-machine",
+  "production_url": "https://your-n8n-instance.com/webhook/lead-machine",
+  "active_url": "https://your-n8n-instance.com/webhook-test/lead-machine",
+  "dispatch_callback_url": "http://localhost:8000/api/campaigns/dispatch-email"
+}
