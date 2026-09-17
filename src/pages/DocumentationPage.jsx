@@ -27,6 +27,7 @@ import {
   Check,
   XCircle
 } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
 
 export default function DocumentationPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -88,30 +89,22 @@ export default function DocumentationPage() {
   return (
     <div className="w-full space-y-8 animate-in fade-in duration-200 pb-16">
       
-      {/* 1. Page Header (Full Width) */}
-      <div className="pb-6 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-700">
-            <BookOpen className="w-4 h-4" />
-            <span>Knowledge Base & Integrations</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">
-            Integration Guides & Troubleshooting
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Detailed walkthroughs, API credential guides, and security setup for your outbound email dispatchers.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => navigate('/settings')}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold transition-all shadow-2xs self-start md:self-auto cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4 text-slate-500" />
-          <span>Back to Account Settings</span>
-        </button>
-      </div>
+      {/* 1. Page Header Hero Card */}
+      <PageHeader
+        icon={BookOpen}
+        title="Integration Guides & Troubleshooting"
+        subtitle="Detailed walkthroughs, API credential guides, and security setup for your outbound email dispatchers."
+        badges={
+          <>
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+              Knowledge Base & Integrations
+            </span>
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-600">
+              DNS & API Setup
+            </span>
+          </>
+        }
+      />
 
       {/* 2. Main Two-Column Layout (No Horizontal Scroll, Full Spacious Width) */}
       <div className="flex flex-col lg:flex-row items-start gap-8 w-full">

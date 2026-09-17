@@ -24,11 +24,13 @@ import {
   Sparkles,
   ChevronRight,
   Save,
-  Info
+  Info,
+  SlidersHorizontal
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useConfirm } from '../context/ConfirmContext';
 import { TONE_OPTIONS, findToneOption } from '../data/emailTones';
+import PageHeader from '../components/PageHeader';
 
 // Helper to compute industry-standard Cold Outreach Sender Display Name: "{Persona} from {Company}"
 const computeAutoSenderDisplayName = (persona, company) => {
@@ -783,49 +785,37 @@ export default function CampaignSettingsPage({
 
   return (
     <div className="space-y-6 w-full pb-20 animate-in fade-in duration-150">
-      {/* Top Header Navigation Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
-        <div className="space-y-1">
-          <button
-            type="button"
-            onClick={handleBackToLeads}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-emerald-700 transition-colors cursor-pointer mb-1"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Campaign Leads & Overview</span>
-          </button>
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              Campaign Settings & Outbound Architecture
-            </h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold shrink-0">
-              {companyName || 'Campaign'}
-            </span>
+      {/* Standardized Hero Header Navigation */}
+      <PageHeader
+        icon={SlidersHorizontal}
+        title="Campaign Settings & Outbound Architecture"
+        titleBadge={
+          <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold shrink-0">
+            {companyName || 'Campaign'}
+          </span>
+        }
+        subtitle="Configure company identity, AI personalization pitch, and dedicated cold email provider settings on this single page."
+        actions={
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={handleBackToLeads}
+              className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all shadow-2xs cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveAll}
+              disabled={savingAll}
+              className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm hover:shadow-md active:scale-95 disabled:opacity-50 cursor-pointer flex items-center gap-2"
+            >
+              {savingAll && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+              <span>Save All Changes</span>
+            </button>
           </div>
-          <p className="text-xs text-slate-500">
-            Configure company identity, AI personalization pitch, and dedicated cold email provider settings on this single page.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5 shrink-0">
-          <button
-            type="button"
-            onClick={handleBackToLeads}
-            className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all shadow-2xs cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSaveAll}
-            disabled={savingAll}
-            className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm hover:shadow-md active:scale-95 disabled:opacity-50 cursor-pointer flex items-center gap-2"
-          >
-            {savingAll && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
-            <span>Save All Changes</span>
-          </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Floating Status Feedback Banner (Floats at top of screen wherever the user is scrolled) */}
       {statusBanner && (

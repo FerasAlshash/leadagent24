@@ -19,6 +19,7 @@ import {
 import MetricsGrid from '../components/analytics/MetricsGrid';
 import AnalyticsCharts from '../components/analytics/AnalyticsCharts';
 import { parseLocationFromAddress } from '../utils/locationParser';
+import PageHeader from '../components/PageHeader';
 
 export default function DashboardPage({
   leads = [],
@@ -76,43 +77,31 @@ export default function DashboardPage({
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
       {/* 1. Grand Dashboard Hero Card */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div className="flex items-start gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xl shadow-xs shrink-0">
-            <Activity className="w-7 h-7 text-white" />
-          </div>
-          <div>
-            <div className="flex flex-wrap items-center gap-2 mb-1.5">
-              <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
-                Executive Performance & Analytics
-              </span>
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-600">
-                Real-Time Telemetry
-              </span>
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900">
-              Outbound Intelligence Dashboard
-            </h1>
-
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
-              Cross-campaign prospecting metrics, contact discovery distribution, and live outreach performance.
-            </p>
-          </div>
-        </div>
-
-        {/* Action Controls */}
-        <div className="flex items-center gap-3 pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100 shrink-0">
+      <PageHeader
+        icon={Activity}
+        title="Outbound Intelligence Dashboard"
+        subtitle="Cross-campaign prospecting metrics, contact discovery distribution, and live outreach performance."
+        badges={
+          <>
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+              Executive Performance & Analytics
+            </span>
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-600">
+              Real-Time Telemetry
+            </span>
+          </>
+        }
+        actions={
           <button
             type="button"
             onClick={onCreateCampaign}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all cursor-pointer active:scale-95"
           >
             <PlusCircle className="w-4 h-4" />
             <span>New Campaign</span>
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* 2. Key Multi-Channel Metrics (8 KPI Cards) */}
       <MetricsGrid leads={leads} campaigns={campaigns} />

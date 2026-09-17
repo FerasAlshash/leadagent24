@@ -16,6 +16,7 @@ import { useConfirm } from '../context/ConfirmContext';
 import { supabase } from '../lib/supabase';
 import CampaignCard from '../components/CampaignCard';
 import CampaignModal from '../components/CampaignModal';
+import PageHeader from '../components/PageHeader';
 
 const FASTAPI_URL = "http://127.0.0.1:8000";
 
@@ -119,46 +120,34 @@ export default function CampaignsPage({
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
       {/* Hero Header Card */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div className="flex items-start gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xl shadow-xs shrink-0">
-            <Briefcase className="w-7 h-7 text-white" />
-          </div>
-          <div>
-            <div className="flex flex-wrap items-center gap-2 mb-1.5">
-              <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
-                Multi-Tenant Campaign Hub
-              </span>
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-600">
-                {campaigns.length} {campaigns.length === 1 ? 'Workspace' : 'Workspaces'}
-              </span>
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900">
-              My Business Campaigns
-            </h1>
-
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
-              Each campaign operates as an independent company workspace with its own prospects, search criteria, and value pitch.
-            </p>
-          </div>
-        </div>
-
-        {/* Action Controls */}
-        <div className="flex items-center gap-3 pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100 shrink-0">
+      <PageHeader
+        icon={Briefcase}
+        title="My Business Campaigns"
+        subtitle="Each campaign operates as an independent company workspace with its own prospects, search criteria, and value pitch."
+        badges={
+          <>
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+              Multi-Tenant Campaign Hub
+            </span>
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-600">
+              {campaigns.length} {campaigns.length === 1 ? 'Workspace' : 'Workspaces'}
+            </span>
+          </>
+        }
+        actions={
           <button
             type="button"
             onClick={() => {
               setEditingCampaign(null);
               setIsModalOpen(true);
             }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all cursor-pointer active:scale-95"
           >
             <PlusCircle className="w-4 h-4" />
             <span>New Campaign</span>
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Aggregated Unified Summary Bar */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
