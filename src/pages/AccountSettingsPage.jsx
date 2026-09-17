@@ -37,6 +37,89 @@ import { diagnoseEmailError } from '../utils/emailDiagnostics';
 import { getProviderVisual, ResendLogo, BrevoLogo, SendGridLogo, SmtpLogo } from '../components/ProviderLogos';
 import PageHeader from '../components/PageHeader';
 
+const PROVIDER_GUIDES = {
+  resend: {
+    name: 'Resend',
+    checklist: [
+      {
+        step: '1. Resend DNS Authentication',
+        badge: 'TXT & MX Records',
+        desc: 'In Resend Dashboard > Domains, add the provided SPF TXT (include:amazonses.com) and DKIM TXT (resend._domainkey) records into your DNS provider (Cloudflare, Namecheap, GoDaddy).'
+      },
+      {
+        step: '2. Generate API Key',
+        badge: 'Starts with re_',
+        desc: 'Go to Resend > API Keys. Create an API key with "Sending Access" or "Full Access", copy the token (begins with re_), and save it securely in this vault.'
+      },
+      {
+        step: '3. In-Campaign Usage',
+        badge: 'Verified Domain',
+        desc: 'Inside any campaign, select this Resend credential and set your sender address using your verified domain (e.g. outreach@yourcompany.com).'
+      }
+    ]
+  },
+  brevo: {
+    name: 'Brevo',
+    checklist: [
+      {
+        step: '1. Brevo DNS & Code Verification',
+        badge: 'TXT & DKIM',
+        desc: 'In Brevo > Senders & IP > Domains, add the Brevo verification code (brevo-code=...) alongside the DKIM (mail._domainkey) and SPF TXT records to achieve "Authenticated" status.'
+      },
+      {
+        step: '2. Generate v3 API Key',
+        badge: 'Starts with xkeysib-',
+        desc: 'Navigate to your Brevo Account > SMTP & API > API Keys tab. Generate a new v3 API key (begins with xkeysib-), copy it, and paste it into this vault.'
+      },
+      {
+        step: '3. In-Campaign Usage',
+        badge: 'Validated Sender',
+        desc: 'Ensure your sender email is added and verified under Brevo Senders before launching outreach campaigns to avoid 400 Sender Validation errors.'
+      }
+    ]
+  },
+  sendgrid: {
+    name: 'SendGrid',
+    checklist: [
+      {
+        step: '1. Automated Security CNAMEs',
+        badge: '3 CNAME Records',
+        desc: 'In SendGrid > Settings > Sender Authentication > Domain Authentication, copy the 3 generated CNAME records (emXXXX, s1, s2._domainkey) into your DNS management console.'
+      },
+      {
+        step: '2. Generate Restricted API Key',
+        badge: 'Starts with SG.',
+        desc: 'In Settings > API Keys, generate a key with "Restricted Access > Mail Send: Full Access" (or Full Access). Copy the key (starts with SG.) immediately as it is only shown once.'
+      },
+      {
+        step: '3. In-Campaign Usage',
+        badge: 'Authenticated Sender',
+        desc: 'Verify Single Sender or Domain Authentication is verified in SendGrid, then link this credential to any outbound campaign sequence.'
+      }
+    ]
+  },
+  smtp: {
+    name: 'Custom SMTP',
+    checklist: [
+      {
+        step: '1. Host & Port Configuration',
+        badge: 'Host:Port 587/465',
+        desc: 'Enter your mail host (e.g. smtp.gmail.com, smtp.office365.com, or private Postfix/Haraka). Use Port 587 (STARTTLS) or Port 465 (SSL/TLS).'
+      },
+      {
+        step: '2. App Password (No API Key)',
+        badge: 'App-Specific Password',
+        desc: 'Do not use your main account password! For Google Workspace or Microsoft 365, generate a dedicated 16-character "App Password" in your account security center.'
+      },
+      {
+        step: '3. In-Campaign Usage',
+        badge: 'Matching Sender Email',
+        desc: 'The campaign sender email address must strictly match your authenticated SMTP username to satisfy mail server relay policies and anti-spoofing rules.'
+      }
+    ]
+  }
+};
+
 export default function AccountSettingsPage({ leadsCount = 0, campaignsCount = 0 }) {
   const { user, profile, loading: authLoading, updatePassword, signOut } = useAuth();
   const { confirm } = useConfirm();
@@ -799,42 +882,44 @@ export default function AccountSettingsPage({ leadsCount = 0, campaignsCount = 0
               </div>
             </div>
 
-            {/* Quick Guide Card */}
-            <div className="p-4 rounded-2xl border border-slate-200 bg-white text-xs space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-900 uppercase tracking-wider text-[11px]">
-                  {guideProvider.toUpperCase()} Integration Checklist
-                </span>
-                <a 
-                  href={`/docs?provider=${guideProvider}`}
-                  className="text-[11px] font-bold text-emerald-600 hover:underline flex items-center gap-1"
-                >
-                  <span>Open Full Documentation</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
+            {/* Quick Guide Card - Dynamically Tailored per Provider */}
+            {(() => {
+              const currentGuide = PROVIDER_GUIDES[guideProvider] || PROVIDER_GUIDES.resend;
+              return (
+                <div className="p-4 rounded-2xl border border-slate-200 bg-white text-xs space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-900 uppercase tracking-wider text-[11px]">
+                      {currentGuide.name.toUpperCase()} Integration Checklist
+                    </span>
+                    <a 
+                      href={`/docs?provider=${guideProvider}`}
+                      className="text-[11px] font-bold text-emerald-600 hover:underline flex items-center gap-1"
+                    >
+                      <span>Open Full Documentation</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 text-[11px]">
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
-                  <span className="font-bold text-slate-800 block">1. DNS Domain Verification</span>
-                  <p className="text-slate-500">
-                    Add TXT records (SPF and DKIM) provided by your dashboard into your domain DNS (Cloudflare, Namecheap, GoDaddy).
-                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 text-[11px]">
+                    {currentGuide.checklist.map((item, idx) => (
+                      <div key={idx} className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between gap-1 mb-1">
+                            <span className="font-bold text-slate-800 block">{item.step}</span>
+                            <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600">
+                              {item.badge}
+                            </span>
+                          </div>
+                          <p className="text-slate-500 leading-relaxed">
+                            {item.desc}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
-                  <span className="font-bold text-slate-800 block">2. API Key Permissions</span>
-                  <p className="text-slate-500">
-                    Generate an API key with "Sending Access" or "Full Access", then save it in this vault.
-                  </p>
-                </div>
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
-                  <span className="font-bold text-slate-800 block">3. In-Campaign Usage</span>
-                  <p className="text-slate-500">
-                    Inside each campaign, select this credential and specify any authorized sender email on your verified domain!
-                  </p>
-                </div>
-              </div>
-            </div>
+              );
+            })()}
           </div>
 
         </div>
