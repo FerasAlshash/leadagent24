@@ -14,7 +14,6 @@ import {
   ArrowLeft,
   ChevronRight,
   Shield,
-  Sparkles,
   HelpCircle,
   AlertCircle,
   Info,
@@ -172,7 +171,7 @@ export default function DocumentationPage() {
           {/* Quick Help Card */}
           <div className="p-4 rounded-3xl bg-emerald-50/60 border border-emerald-200 text-emerald-950 space-y-2">
             <div className="flex items-center gap-2 font-bold text-xs text-emerald-900">
-              <Sparkles className="w-4 h-4 text-emerald-600" />
+              <Mail className="w-4 h-4 text-emerald-600" />
               <span>Multi-Tenant Cold Mail</span>
             </div>
             <p className="text-[11px] text-emerald-800/90 leading-relaxed">
@@ -974,7 +973,7 @@ export default function DocumentationPage() {
             <div className="space-y-6 animate-in fade-in duration-150">
               <div className="p-6 rounded-3xl bg-emerald-50 border border-emerald-200 space-y-2">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-emerald-600" />
+                  <ShieldCheck className="w-5 h-5 text-emerald-600" />
                   <h3 className="text-base font-bold text-slate-900">Primary Inbox Placement: 100% Deliverability</h3>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed max-w-3xl">

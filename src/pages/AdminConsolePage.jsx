@@ -20,7 +20,6 @@ import {
   Zap,
   Radio,
   Sliders,
-  Sparkles,
   ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';

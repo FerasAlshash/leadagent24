@@ -15,6 +15,9 @@ const AuditLogPage = lazy(() => import('./pages/AuditLogPage'));
 const AccountSettingsPage = lazy(() => import('./pages/AccountSettingsPage'));
 const AdminConsolePage = lazy(() => import('./pages/AdminConsolePage'));
 const DocumentationPage = lazy(() => import('./pages/DocumentationPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
 
 // 2. Modals & Workspace Components
 import Sidebar from './components/Sidebar';
@@ -217,6 +220,11 @@ export default function App() {
   // Guest routing state
   const [guestView, setGuestView] = useState('landing');
   const [authMode, setAuthMode] = useState('signin'); // 'signin' | 'signup'
+
+  // Automatically scroll to top on any page or view change
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [pathname, guestView]);
   
   // Data state
   const [allCampaigns, setAllCampaigns] = useState([]);
@@ -607,7 +615,7 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center">
         <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin mb-3" />
-        <span className="text-xs font-semibold text-slate-500">Initializing Lead Machine...</span>
+        <span className="text-xs font-semibold text-slate-500">Initializing LeadAgent24...</span>
       </div>
     );
   }
@@ -616,6 +624,69 @@ export default function App() {
   // VIEW 1: UNAUTHENTICATED GUESTS (STRICT ISOLATION - NO WORKSPACE EXPOSURE)
   // =========================================================================
   if (!user) {
+    if (pathname === '/about') {
+      return (
+        <Suspense fallback={<PageLoadingFallback />}>
+          <AboutPage
+            onBackToHome={() => navigate('/')}
+            onSignIn={() => {
+              setAuthMode('signin');
+              setGuestView('auth');
+              navigate('/auth');
+            }}
+            onGetStarted={() => {
+              setAuthMode('signup');
+              setGuestView('auth');
+              navigate('/auth');
+            }}
+            onNavigateLegal={(path) => navigate(path)}
+          />
+        </Suspense>
+      );
+    }
+
+    if (pathname === '/privacy') {
+      return (
+        <Suspense fallback={<PageLoadingFallback />}>
+          <PrivacyPage
+            onBackToHome={() => navigate('/')}
+            onSignIn={() => {
+              setAuthMode('signin');
+              setGuestView('auth');
+              navigate('/auth');
+            }}
+            onGetStarted={() => {
+              setAuthMode('signup');
+              setGuestView('auth');
+              navigate('/auth');
+            }}
+            onNavigateTerms={() => navigate('/terms')}
+          />
+        </Suspense>
+      );
+    }
+
+    if (pathname === '/terms') {
+      return (
+        <Suspense fallback={<PageLoadingFallback />}>
+          <TermsPage
+            onBackToHome={() => navigate('/')}
+            onSignIn={() => {
+              setAuthMode('signin');
+              setGuestView('auth');
+              navigate('/auth');
+            }}
+            onGetStarted={() => {
+              setAuthMode('signup');
+              setGuestView('auth');
+              navigate('/auth');
+            }}
+            onNavigatePrivacy={() => navigate('/privacy')}
+          />
+        </Suspense>
+      );
+    }
+
     if (guestView === 'auth' || pathname === '/auth') {
       return (
         <Suspense fallback={<PageLoadingFallback />}>
@@ -625,6 +696,7 @@ export default function App() {
               setGuestView('landing');
               navigate('/');
             }}
+            onNavigateLegal={(path) => navigate(path)}
           />
         </Suspense>
       );
@@ -643,6 +715,7 @@ export default function App() {
             setGuestView('auth');
             navigate('/auth');
           }}
+          onNavigate={(path) => navigate(path)}
         />
       </Suspense>
     );
@@ -839,6 +912,18 @@ export default function App() {
               <Route 
                 path="/docs" 
                 element={<DocumentationPage />} 
+              />
+              <Route 
+                path="/about" 
+                element={<AboutPage onBackToHome={() => navigate('/')} onSignIn={() => navigate('/dashboard')} onGetStarted={() => navigate('/campaigns')} onNavigateLegal={(p) => navigate(p)} />} 
+              />
+              <Route 
+                path="/privacy" 
+                element={<PrivacyPage onBackToHome={() => navigate('/')} onSignIn={() => navigate('/dashboard')} onGetStarted={() => navigate('/campaigns')} onNavigateTerms={() => navigate('/terms')} />} 
+              />
+              <Route 
+                path="/terms" 
+                element={<TermsPage onBackToHome={() => navigate('/')} onSignIn={() => navigate('/dashboard')} onGetStarted={() => navigate('/campaigns')} onNavigatePrivacy={() => navigate('/privacy')} />} 
               />
               <Route 
                 path="/settings" 

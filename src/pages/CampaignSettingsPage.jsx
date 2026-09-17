@@ -21,7 +21,6 @@ import {
   Server,
   X,
   BookOpen,
-  Sparkles,
   ChevronRight,
   Save,
   Info,

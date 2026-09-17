@@ -7,7 +7,6 @@ import {
   Briefcase, 
   Mail, 
   Users, 
-  Sparkles, 
   Clock, 
   ChevronRight,
   ShieldCheck,
@@ -51,7 +50,7 @@ export default function NotificationDropdown({
       case 'admin':
         return <ShieldCheck className="w-4 h-4 text-purple-600" />;
       default:
-        return <Sparkles className="w-4 h-4 text-emerald-600" />;
+        return <Activity className="w-4 h-4 text-emerald-600" />;
     }
   };
 

@@ -11,7 +11,6 @@ import {
   ArrowRight,
   Database,
   Layers,
-  Sparkles,
   Cpu
 } from 'lucide-react';
 

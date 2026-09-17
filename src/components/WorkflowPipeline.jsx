@@ -1,5 +1,5 @@
 import React from 'react';
-import { Globe, MapPin, Sparkles, Database, Mail, Send, ArrowRight } from 'lucide-react';
+import { Globe, MapPin, Cpu, Database, Mail, Send, ArrowRight } from 'lucide-react';
 
 const steps = [
   {
@@ -21,7 +21,7 @@ const steps = [
     bg: "bg-blue-500/10"
   },
   {
-    icon: Sparkles,
+    icon: Cpu,
     title: "AI Enrichment Engine",
     subtitle: "Executive Contact Resolution",
     color: "from-indigo-500 to-purple-500",

@@ -5,7 +5,7 @@ import {
   Clock, 
   CheckCircle2, 
   Check, 
-  Sparkles, 
+  Activity, 
   Minimize2, 
   Maximize2, 
   X, 
@@ -252,7 +252,11 @@ export default function ProspectingProgressModal({
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                    <Sparkles className={`w-3.5 h-3.5 ${session.isCompleted ? 'text-emerald-600' : 'text-amber-500'}`} />
+                    {session.isCompleted ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    ) : (
+                      <Activity className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+                    )}
                     <span>{stageHeadline}</span>
                   </div>
                   <p className="text-xs text-slate-500 mt-1 leading-relaxed">

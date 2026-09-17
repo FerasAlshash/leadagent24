@@ -12,7 +12,6 @@ import {
   Compass,
   CheckCircle2,
   Globe,
-  Sparkles,
   Link2,
   Unlink
 } from 'lucide-react';

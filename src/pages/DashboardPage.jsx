@@ -11,7 +11,6 @@ import {
   Building2, 
   ExternalLink,
   ChevronRight,
-  Sparkles,
   Layers,
   MapPin,
   PieChart

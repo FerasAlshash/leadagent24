@@ -20,7 +20,6 @@ import {
   MapPin, 
   Users,
   ChevronDown,
-  Sparkles,
   ShieldCheck,
   Globe,
   Eye

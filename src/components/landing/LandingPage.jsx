@@ -9,7 +9,6 @@ import {
   Globe, 
   Briefcase, 
   Compass, 
-  Sparkles, 
   ShieldCheck, 
   Sliders, 
   FileSpreadsheet, 

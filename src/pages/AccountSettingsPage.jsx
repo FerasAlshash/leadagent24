@@ -9,7 +9,6 @@ import {
   Zap, 
   Mail, 
   Calendar,
-  Sparkles,
   Eye,
   EyeOff,
   Send,
@@ -1261,7 +1260,7 @@ export default function AccountSettingsPage({ leadsCount = 0, campaignsCount = 0
 
               <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5 mt-2">
                 <div className="flex items-center gap-1.5 font-bold text-slate-900 text-[11px]">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                   <span>Unlimited B2B Prospecting</span>
                 </div>
                 <p className="text-[11px] text-slate-500 leading-relaxed">

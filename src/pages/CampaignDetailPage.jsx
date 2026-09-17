@@ -20,7 +20,6 @@ import {
   Star, 
   Settings, 
   Send,
-  Sparkles,
   RefreshCw,
   Copy,
   Check,

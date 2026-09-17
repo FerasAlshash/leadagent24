@@ -11,6 +11,7 @@ import {
   LogOut,
   BookOpen
 } from 'lucide-react';
+import LeadAgentLogo from './LeadAgentLogo';
 
 export default function Sidebar({ 
   isOpen, 
@@ -107,15 +108,13 @@ export default function Sidebar({
         <div>
           <div className="h-20 px-6 flex items-center justify-between border-b border-slate-200">
             <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow-xs">
-                LM
-              </div>
+              <LeadAgentLogo className="w-10 h-10 shadow-xs" />
               <div>
                 <span className="font-black text-lg text-slate-900 tracking-tight block">
-                  Lead Machine
+                  LeadAgent<span className="text-emerald-600">24</span>
                 </span>
                 <span className="text-[11px] font-semibold text-slate-400 block -mt-0.5">
-                  B2B SaaS Outbound Suite
+                  Autonomous B2B Lead Engine
                 </span>
               </div>
             </div>

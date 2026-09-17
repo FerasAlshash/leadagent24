@@ -9,7 +9,6 @@ import {
   ExternalLink, 
   Building2, 
   Send, 
-  Sparkles,
   CheckCircle2,
   FileText,
   Briefcase
@@ -111,7 +110,7 @@ export default function SentEmailModal({
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sky-100 border border-sky-300 text-sky-900 font-bold text-[11px] shadow-2xs">
-                    <Sparkles className="w-3 h-3 text-sky-600" />
+                    <CheckCircle2 className="w-3 h-3 text-sky-600" />
                     <span>Verified Contact • Ready for Dispatch</span>
                   </span>
                 )}
@@ -258,7 +257,7 @@ export default function SentEmailModal({
             ) : isSent ? (
               <div className="p-6 text-center rounded-xl bg-emerald-50/40 border border-dashed border-emerald-200 space-y-2">
                 <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 mx-auto flex items-center justify-center">
-                  <Sparkles className="w-5 h-5" />
+                  <FileText className="w-5 h-5" />
                 </div>
                 <h4 className="text-sm font-bold text-slate-800">
                   Archival Active for Upcoming Dispatches
@@ -270,7 +269,7 @@ export default function SentEmailModal({
             ) : (
               <div className="p-6 text-center rounded-xl bg-sky-50/50 border border-dashed border-sky-200 space-y-2">
                 <div className="w-10 h-10 rounded-full bg-sky-100 text-sky-700 mx-auto flex items-center justify-center">
-                  <Sparkles className="w-5 h-5" />
+                  <Send className="w-5 h-5" />
                 </div>
                 <h4 className="text-sm font-bold text-slate-800">
                   Automated AI Pitch Ready to Generate

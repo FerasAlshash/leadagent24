@@ -6,7 +6,6 @@ import {
   Phone, 
   Globe, 
   Briefcase, 
-  Sparkles,
   Layers,
   ArrowUpRight
 } from 'lucide-react';

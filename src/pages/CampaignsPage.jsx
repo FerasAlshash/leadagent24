@@ -3,7 +3,6 @@ import {
   Briefcase, 
   PlusCircle, 
   RefreshCw, 
-  Sparkles, 
   CheckCircle2, 
   Building2, 
   Layers, 
