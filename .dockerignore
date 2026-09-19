@@ -1,0 +1,10 @@
+node_modules
+.git
+.agents
+dist
+dist-ssr
+__pycache__
+*.pyc
+*.pyo
+.env.local
+.env.*.local

@@ -1,0 +1,25 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: leadagent-backend
+    restart: unless-stopped
+    ports:
+      - "8008:8000"
+    environment:
+      - PORT=8000
+    env_file:
+      - path: backend/.env
+        required: false
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: leadagent-frontend
+    restart: unless-stopped
+    ports:
+      - "3050:80"
+    depends_on:
+      - backend

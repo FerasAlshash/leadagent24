@@ -9,7 +9,7 @@ ENV_PATH = Path(__file__).resolve().parent / ".env"
 
 DEFAULT_TEST_URL = "https://n8n.inexlify.com/webhook-test/lead-machine"
 DEFAULT_PROD_URL = "https://n8n.inexlify.com/webhook/lead-machine"
-DEFAULT_DISPATCH_URL = "http://192.168.0.236:8000/api/campaigns/dispatch-email"
+DEFAULT_DISPATCH_URL = "https://lead.inexlify.com/api/campaigns/dispatch-email"
 
 def _sync_to_env_file(active_url: str):
     """Safely updates N8N_WEBHOOK_URL in backend/.env if the file exists."""

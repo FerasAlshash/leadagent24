@@ -16,8 +16,9 @@ import { supabase } from '../lib/supabase';
 import CampaignCard from '../components/CampaignCard';
 import CampaignModal from '../components/CampaignModal';
 import PageHeader from '../components/PageHeader';
+import { API_BASE_URL } from '../lib/api';
 
-const FASTAPI_URL = "http://127.0.0.1:8000";
+const FASTAPI_URL = API_BASE_URL;
 
 export default function CampaignsPage({ 
   onOpenCampaign, 

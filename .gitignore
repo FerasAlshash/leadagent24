@@ -11,6 +11,8 @@ backend/.env.*
 backend/email_settings.json
 backend/webhook_settings.json
 !backend/webhook_settings.example.json
+deploy-nas/
+*.zip
 
 # ==========================================
 # 2. Node & Frontend (React / Vite)

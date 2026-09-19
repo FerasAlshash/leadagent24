@@ -36,6 +36,7 @@ import { checkPasswordStrength } from '../utils/passwordValidator';
 import { diagnoseEmailError } from '../utils/emailDiagnostics';
 import { getProviderVisual, ResendLogo, BrevoLogo, SendGridLogo, SmtpLogo } from '../components/ProviderLogos';
 import PageHeader from '../components/PageHeader';
+import { API_BASE_URL } from '../lib/api';
 
 const PROVIDER_GUIDES = {
   resend: {
@@ -230,7 +231,7 @@ export default function AccountSettingsPage({ leadsCount = 0, campaignsCount = 0
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
-      const res = await fetch('http://127.0.0.1:8000/api/email-integrations/credentials', {
+      const res = await fetch(`${API_BASE_URL}/api/email-integrations/credentials`, {
         headers: {
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         }
@@ -307,7 +308,7 @@ export default function AccountSettingsPage({ leadsCount = 0, campaignsCount = 0
         smtp_pass: credForm.smtpPass ? credForm.smtpPass : undefined
       };
 
-      const res = await fetch('http://127.0.0.1:8000/api/email-integrations/credentials', {
+      const res = await fetch(`${API_BASE_URL}/api/email-integrations/credentials`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -341,7 +342,7 @@ export default function AccountSettingsPage({ leadsCount = 0, campaignsCount = 0
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
-      const res = await fetch(`http://127.0.0.1:8000/api/email-integrations/credentials/${credId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/email-integrations/credentials/${credId}`, {
         method: 'DELETE',
         headers: {
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -381,7 +382,7 @@ export default function AccountSettingsPage({ leadsCount = 0, campaignsCount = 0
         test_recipient: testRecipient || user?.email || 'test@example.com'
       };
 
-      const res = await fetch('http://127.0.0.1:8000/api/email-integrations/test', {
+      const res = await fetch(`${API_BASE_URL}/api/email-integrations/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

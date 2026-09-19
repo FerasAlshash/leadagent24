@@ -35,8 +35,10 @@ function PageLoadingFallback() {
   );
 }
 
+import { API_BASE_URL } from './lib/api';
+
 const DEFAULT_WEBHOOK_URL = "https://n8n.inexlify.com/webhook-test/lead-machine";
-const FASTAPI_URL = "http://127.0.0.1:8000";
+const FASTAPI_URL = API_BASE_URL;
 
 // Dedicated Campaign Workspace Route Wrapper with Deep-linking & Direct Fetch
 function CampaignWorkspaceRoute({
@@ -341,9 +343,53 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         setAllCampaigns(data || []);
+      } else if (user?.id) {
+        // Resilient fallback: fetch directly from Supabase
+        const { data: rawCamps } = await supabase
+          .from('campaigns')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        if (rawCamps && rawCamps.length > 0) {
+          const decoded = rawCamps.map(c => {
+            let title = c.title || '';
+            let company_name = title;
+            if (title.startsWith('{') && title.endsWith('}')) {
+              try {
+                const meta = JSON.parse(title);
+                title = meta.title || title;
+                company_name = meta.company_name || title;
+              } catch {}
+            }
+            return { ...c, title, company_name };
+          });
+          setAllCampaigns(decoded);
+        }
       }
     } catch (err) {
       console.warn('Failed to fetch campaigns:', err);
+      if (user?.id) {
+        const { data: rawCamps } = await supabase
+          .from('campaigns')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        if (rawCamps && rawCamps.length > 0) {
+          const decoded = rawCamps.map(c => {
+            let title = c.title || '';
+            let company_name = title;
+            if (title.startsWith('{') && title.endsWith('}')) {
+              try {
+                const meta = JSON.parse(title);
+                title = meta.title || title;
+                company_name = meta.company_name || title;
+              } catch {}
+            }
+            return { ...c, title, company_name };
+          });
+          setAllCampaigns(decoded);
+        }
+      }
     }
   };
 

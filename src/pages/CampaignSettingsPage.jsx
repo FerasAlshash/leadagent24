@@ -30,6 +30,7 @@ import { supabase } from '../lib/supabase';
 import { useConfirm } from '../context/ConfirmContext';
 import { TONE_OPTIONS, findToneOption } from '../data/emailTones';
 import PageHeader from '../components/PageHeader';
+import { API_BASE_URL } from '../lib/api';
 
 // Helper to compute industry-standard Cold Outreach Sender Display Name: "{Persona} from {Company}"
 const computeAutoSenderDisplayName = (persona, company) => {
@@ -321,7 +322,7 @@ export default function CampaignSettingsPage({
         setTestRecipient(session.user.email);
       }
 
-      const res = await fetch(`http://127.0.0.1:8000/api/email-integrations/campaign/${campaignId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/email-integrations/campaign/${campaignId}`, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
 
@@ -473,7 +474,7 @@ export default function CampaignSettingsPage({
         smtp_pass: selectedProvider === 'smtp' ? currentForm.pass : undefined,
       };
 
-      const res = await fetch('http://127.0.0.1:8000/api/email-integrations/credentials', {
+      const res = await fetch(`${API_BASE_URL}/api/email-integrations/credentials`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -568,7 +569,7 @@ export default function CampaignSettingsPage({
         smtp_pass: selectedProvider === 'smtp' && selectedCredMode === 'new' ? currentForm.pass : undefined,
       };
 
-      const res = await fetch('http://127.0.0.1:8000/api/email-integrations/verify-connection', {
+      const res = await fetch(`${API_BASE_URL}/api/email-integrations/verify-connection`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -622,7 +623,7 @@ export default function CampaignSettingsPage({
         smtp_pass: selectedProvider === 'smtp' && selectedCredMode === 'new' ? currentForm.pass : undefined,
       };
 
-      const res = await fetch('http://127.0.0.1:8000/api/email-integrations/test', {
+      const res = await fetch(`${API_BASE_URL}/api/email-integrations/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -667,7 +668,7 @@ export default function CampaignSettingsPage({
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
-      await fetch(`http://127.0.0.1:8000/api/email-integrations/campaign/${campaignId}`, {
+      await fetch(`${API_BASE_URL}/api/email-integrations/campaign/${campaignId}`, {
         method: 'DELETE',
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
@@ -734,7 +735,7 @@ export default function CampaignSettingsPage({
           smtp_pass: selectedProvider === 'smtp' && selectedCredMode === 'new' ? currentForm.pass : undefined,
         };
 
-        const res = await fetch(`http://127.0.0.1:8000/api/email-integrations/campaign/${campaignId}`, {
+        const res = await fetch(`${API_BASE_URL}/api/email-integrations/campaign/${campaignId}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { API_BASE_URL } from '../lib/api';
 
 const AuthContext = createContext({});
-const FASTAPI_URL = "http://127.0.0.1:8000";
+const FASTAPI_URL = API_BASE_URL;
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

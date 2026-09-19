@@ -42,6 +42,7 @@ import { useConfirm } from '../context/ConfirmContext';
 import ProspectingProgressModal from '../components/ProspectingProgressModal';
 import SentEmailModal from '../components/SentEmailModal';
 import PageHeader from '../components/PageHeader';
+import { API_BASE_URL } from '../lib/api';
 
 // Robust helper to extract clean city name from lead address
 const extractCityFromLead = (lead) => {
@@ -302,7 +303,7 @@ export default function CampaignDetailPage({
       if (!campaignTestRecipient && session?.user?.email) {
         setCampaignTestRecipient(session.user.email);
       }
-      const res = await fetch(`http://127.0.0.1:8000/api/email-integrations/campaign/${campaign.id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/email-integrations/campaign/${campaign.id}`, {
         headers: {
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         }
@@ -383,7 +384,7 @@ export default function CampaignDetailPage({
         smtp_pass: campaignProvider === 'smtp' && selectedCredId === 'custom' ? customSmtpPass : undefined
       };
 
-      const res = await fetch('http://127.0.0.1:8000/api/email-integrations/test', {
+      const res = await fetch(`${API_BASE_URL}/api/email-integrations/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -437,7 +438,7 @@ export default function CampaignDetailPage({
         smtp_pass: campaignProvider === 'smtp' && selectedCredId === 'custom' ? customSmtpPass : undefined
       };
 
-      const res = await fetch(`http://127.0.0.1:8000/api/email-integrations/campaign/${campaign.id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/email-integrations/campaign/${campaign.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -477,7 +478,7 @@ export default function CampaignDetailPage({
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
-      await fetch(`http://127.0.0.1:8000/api/email-integrations/campaign/${campaign.id}`, {
+      await fetch(`${API_BASE_URL}/api/email-integrations/campaign/${campaign.id}`, {
         method: 'DELETE',
         headers: {
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
