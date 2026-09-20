@@ -6,14 +6,12 @@ services:
     container_name: leadagent-backend
     restart: unless-stopped
     ports:
-      - "0.0.0.0:8008:8000"
+      - "8008:8000"
     environment:
       - PORT=8000
     env_file:
       - path: backend/.env
         required: false
-    networks:
-      - leadagent-net
 
   frontend:
     build:
@@ -22,13 +20,6 @@ services:
     container_name: leadagent-frontend
     restart: unless-stopped
     ports:
-      - "0.0.0.0:3050:80"
+      - "3050:80"
     depends_on:
       - backend
-    networks:
-      - leadagent-net
-
-networks:
-  leadagent-net:
-    name: leadagent-net
-    driver: bridge
