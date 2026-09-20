@@ -141,7 +141,7 @@ export default function CampaignsPage({
               setEditingCampaign(null);
               setIsModalOpen(true);
             }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all cursor-pointer active:scale-95"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all cursor-pointer active:scale-95 whitespace-nowrap"
           >
             <PlusCircle className="w-4 h-4" />
             <span>New Campaign</span>
@@ -150,7 +150,7 @@ export default function CampaignsPage({
       />
 
       {/* Aggregated Unified Summary Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-3.5 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
         <div className="flex items-center gap-3.5 sm:pr-6">
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
             <Briefcase className="w-5 h-5" />

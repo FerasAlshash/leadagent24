@@ -11,39 +11,39 @@ export default function PrivacyPage({ onBackToHome, onSignIn, onGetStarted, onNa
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans selection:bg-emerald-600 selection:text-white flex flex-col">
       {/* 1. Top Navigation Bar */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-3 sm:px-10 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
           <button
             type="button"
             onClick={onBackToHome}
-            className="flex items-center gap-3.5 group cursor-pointer transition-transform active:scale-95 text-left focus:outline-none"
+            className="flex items-center gap-2 sm:gap-3.5 group cursor-pointer transition-transform active:scale-95 text-left focus:outline-none shrink-0"
             title="LeadAgent24 - Home"
           >
-            <LeadAgentLogo className="w-10 h-10 shadow-xs group-hover:scale-105 transition-transform" />
+            <LeadAgentLogo className="w-7 h-7 sm:w-10 sm:h-10 shadow-xs group-hover:scale-105 transition-transform shrink-0" />
             <div>
-              <span className="font-extrabold text-lg text-slate-900 tracking-tight block group-hover:text-emerald-700 transition-colors">
+              <span className="font-extrabold text-xs min-[360px]:text-sm sm:text-lg text-slate-900 tracking-tight block whitespace-nowrap group-hover:text-emerald-700 transition-colors">
                 LeadAgent<span className="text-emerald-600">24</span>
               </span>
-              <span className="text-[11px] font-semibold text-slate-400 block -mt-0.5">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 hidden sm:block -mt-0.5">
                 Privacy & Data Protection
               </span>
             </div>
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <button
               type="button"
               onClick={onSignIn}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-all cursor-pointer"
+              className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-all cursor-pointer whitespace-nowrap"
             >
               Sign In
             </button>
             <button
               type="button"
               onClick={onGetStarted}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white transition-all shadow-xs cursor-pointer"
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white transition-all shadow-xs cursor-pointer whitespace-nowrap"
             >
               <span>Get Started</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </button>
           </div>
         </div>

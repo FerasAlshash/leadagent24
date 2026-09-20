@@ -277,55 +277,55 @@ export default function AdminConsolePage({
       />
 
       {/* Top Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Total Users */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-semibold">Registered SaaS Users</span>
-            <Users className="w-4 h-4 text-slate-400" />
+            <span className="text-[11px] sm:text-xs font-semibold truncate">SaaS Users</span>
+            <Users className="w-4 h-4 text-slate-400 shrink-0" />
           </div>
-          <div className="text-2xl font-extrabold text-slate-900">{system?.total_users || 0}</div>
-          <div className="text-[11px] text-slate-400 mt-1">Multi-tenant accounts</div>
+          <div className="text-xl sm:text-2xl font-extrabold text-slate-900">{system?.total_users || 0}</div>
+          <div className="text-[10px] sm:text-[11px] text-slate-400 mt-1 truncate">Multi-tenant accounts</div>
         </div>
 
         {/* Total Campaigns */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-semibold">Total Campaigns Created</span>
-            <Layers className="w-4 h-4 text-emerald-600" />
+            <span className="text-[11px] sm:text-xs font-semibold truncate">Campaigns</span>
+            <Layers className="w-4 h-4 text-emerald-600 shrink-0" />
           </div>
-          <div className="text-2xl font-extrabold text-slate-900">{system?.total_campaigns || 0}</div>
-          <div className="text-[11px] text-slate-400 mt-1">Across all user workspaces</div>
+          <div className="text-xl sm:text-2xl font-extrabold text-slate-900">{system?.total_campaigns || 0}</div>
+          <div className="text-[10px] sm:text-[11px] text-slate-400 mt-1 truncate">Across workspaces</div>
         </div>
 
         {/* Total Leads */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-semibold">Scraped Places / Leads</span>
-            <Database className="w-4 h-4 text-blue-600" />
+            <span className="text-[11px] sm:text-xs font-semibold truncate">Scoped Leads</span>
+            <Database className="w-4 h-4 text-blue-600 shrink-0" />
           </div>
-          <div className="text-2xl font-extrabold text-slate-900">{system?.total_leads || 0}</div>
-          <div className="text-[11px] text-slate-400 mt-1">Stored in Supabase database</div>
+          <div className="text-xl sm:text-2xl font-extrabold text-slate-900">{system?.total_leads || 0}</div>
+          <div className="text-[10px] sm:text-[11px] text-slate-400 mt-1 truncate">Stored in database</div>
         </div>
 
         {/* Total Emails Sent */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-semibold">Cold Outreach Success</span>
-            <Send className="w-4 h-4 text-emerald-600" />
+            <span className="text-[11px] sm:text-xs font-semibold truncate">Cold Emails</span>
+            <Send className="w-4 h-4 text-emerald-600 shrink-0" />
           </div>
-          <div className="text-2xl font-extrabold text-emerald-600 flex items-baseline gap-2">
-            <span>{system?.total_emails_sent || 0} Sent</span>
-            <span className="text-xs font-semibold text-slate-500">({system?.outreach_success_rate})</span>
+          <div className="text-xl sm:text-2xl font-extrabold text-emerald-600 flex items-baseline gap-1.5 flex-wrap">
+            <span>{system?.total_emails_sent || 0}</span>
+            <span className="text-[10px] sm:text-xs font-semibold text-slate-500">({system?.outreach_success_rate})</span>
           </div>
-          <div className="text-[11px] text-slate-400 mt-1">Confirmed with ✅ status</div>
+          <div className="text-[10px] sm:text-[11px] text-slate-400 mt-1 truncate">Dispatched</div>
         </div>
       </div>
 
       {/* ========================================================================= */}
       {/* WEBHOOK ENVIRONMENT & ROUTING CONTROLLER (FULL-WIDTH EXECUTIVE CARD)      */}
       {/* ========================================================================= */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6">
+      <div className="p-4 sm:p-8 rounded-2xl sm:rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6">
         {/* Header with Title & Active Status */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
           <div className="flex items-center gap-3">

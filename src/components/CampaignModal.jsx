@@ -110,16 +110,16 @@ export default function CampaignModal({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-150">
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl my-8 overflow-hidden">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-150">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl my-auto flex flex-col max-h-[92vh] overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
               <Briefcase className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">
+              <h2 className="text-base sm:text-lg font-bold text-slate-900">
                 {initialCampaign ? 'Edit Campaign Profile' : 'Create New Outbound Campaign'}
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -130,14 +130,14 @@ export default function CampaignModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            className="p-1.5 sm:p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 overflow-y-auto flex-1">
           {error && (
             <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
               {error}

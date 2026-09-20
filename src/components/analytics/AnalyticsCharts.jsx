@@ -77,6 +77,7 @@ export default function AnalyticsCharts({ leads = [], campaigns = [] }) {
           id: lead.id || idx,
           type: isSent ? 'sent' : 'scraped',
           title: isSent ? `Cold email dispatched to ${company}` : `New prospect extracted: ${company}`,
+          company,
           time: new Date(timeVal).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
           category: lead.Category || lead.categoryName || 'B2B Lead',
           city: lead.city || lead.Address || lead.address || 'Unknown Location'
@@ -308,119 +309,121 @@ export default function AnalyticsCharts({ leads = [], campaigns = [] }) {
     : '';
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
       {/* 1. Outbound Velocity & Daily Activity Card (2 Columns) - Generous Height with Zero Overlap */}
-      <div className="lg:col-span-2 p-6 sm:p-7 rounded-2xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between min-h-[430px] max-h-[430px]">
+      <div className="lg:col-span-2 p-5 sm:p-7 rounded-2xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between h-full">
           {/* Header Bar */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-slate-100">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-2xs shrink-0">
                 <TrendingUp className="w-5 h-5" />
               </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-900">
+              <div className="min-w-0">
+                <h3 className="text-base font-bold text-slate-900 truncate">
                   Outbound Velocity & Activity
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5 truncate">
                   {timeRangeMeta.desc}
                 </p>
               </div>
             </div>
 
-            {/* Controls: Compact Dropdown + Style Toggle + Legend in ONE single row */}
-            <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 flex-nowrap">
-              {/* 1. Custom SaaS Floating Dropdown (Harmonious with platform UI, rounded-xl, zero native select ugliness) */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setIsTimeDropdownOpen(prev => !prev)}
-                  className={`h-8 px-3 rounded-xl border text-xs font-bold flex items-center gap-2 transition-all shadow-2xs ${
-                    isTimeDropdownOpen
-                      ? 'bg-emerald-50 border-emerald-300 text-emerald-800 ring-2 ring-emerald-500/20'
-                      : 'bg-slate-100 hover:bg-slate-200/80 border-slate-200 text-slate-700'
-                  }`}
-                  title="Filter time range"
-                >
-                  <Calendar className={`w-3.5 h-3.5 ${isTimeDropdownOpen ? 'text-emerald-600' : 'text-slate-500'}`} />
-                  <span>{timeRangeOptions.find(o => o.id === timeRange)?.label || 'Time Range'}</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                    isTimeDropdownOpen ? 'rotate-180 text-emerald-600' : 'text-slate-400'
-                  }`} />
-                </button>
+            {/* Controls: Compact Dropdown + Style Toggle + Legend */}
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 shrink-0">
+              <div className="flex items-center gap-2">
+                {/* 1. Custom SaaS Floating Dropdown (Harmonious with platform UI, rounded-xl, zero native select ugliness) */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsTimeDropdownOpen(prev => !prev)}
+                    className={`h-8 px-2.5 sm:px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 sm:gap-2 transition-all shadow-2xs ${
+                      isTimeDropdownOpen
+                        ? 'bg-emerald-50 border-emerald-300 text-emerald-800 ring-2 ring-emerald-500/20'
+                        : 'bg-slate-100 hover:bg-slate-200/80 border-slate-200 text-slate-700'
+                    }`}
+                    title="Filter time range"
+                  >
+                    <Calendar className={`w-3.5 h-3.5 ${isTimeDropdownOpen ? 'text-emerald-600' : 'text-slate-500'}`} />
+                    <span>{timeRangeOptions.find(o => o.id === timeRange)?.label || 'Time Range'}</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                      isTimeDropdownOpen ? 'rotate-180 text-emerald-600' : 'text-slate-400'
+                    }`} />
+                  </button>
 
-                {/* Floating Dropdown Card */}
-                {isTimeDropdownOpen && (
-                  <>
-                    <div 
-                      className="fixed inset-0 z-40" 
-                      onClick={() => setIsTimeDropdownOpen(false)} 
-                    />
-                    <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl bg-white border border-slate-200/90 shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
-                      <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 mb-1">
-                        Timeline Range
+                  {/* Floating Dropdown Card */}
+                  {isTimeDropdownOpen && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-40" 
+                        onClick={() => setIsTimeDropdownOpen(false)} 
+                      />
+                      <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-48 rounded-2xl bg-white border border-slate-200/90 shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                        <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 mb-1">
+                          Timeline Range
+                        </div>
+                        {timeRangeOptions.map(opt => {
+                          const isSelected = timeRange === opt.id;
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => {
+                                setTimeRange(opt.id);
+                                setHoveredDay(null);
+                                setIsTimeDropdownOpen(false);
+                              }}
+                              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-bold transition-all text-left ${
+                                isSelected 
+                                  ? 'bg-emerald-50 text-emerald-700 font-extrabold' 
+                                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-emerald-600' : 'bg-slate-300'}`} />
+                                <span>{opt.label}</span>
+                              </div>
+                              {isSelected && <Check className="w-3.5 h-3.5 text-emerald-600" />}
+                            </button>
+                          );
+                        })}
                       </div>
-                      {timeRangeOptions.map(opt => {
-                        const isSelected = timeRange === opt.id;
-                        return (
-                          <button
-                            key={opt.id}
-                            type="button"
-                            onClick={() => {
-                              setTimeRange(opt.id);
-                              setHoveredDay(null);
-                              setIsTimeDropdownOpen(false);
-                            }}
-                            className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-bold transition-all text-left ${
-                              isSelected 
-                                ? 'bg-emerald-50 text-emerald-700 font-extrabold' 
-                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-emerald-600' : 'bg-slate-300'}`} />
-                              <span>{opt.label}</span>
-                            </div>
-                            {isSelected && <Check className="w-3.5 h-3.5 text-emerald-600" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
-              </div>
+                    </>
+                  )}
+                </div>
 
-              {/* 2. Style Switcher: Bars vs Line */}
-              <div className="flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200 text-xs shadow-2xs">
-                <button
-                  type="button"
-                  onClick={() => setChartStyle('bars')}
-                  className={`px-2.5 py-1 rounded-lg font-bold text-[11px] flex items-center gap-1 transition-all ${
-                    chartStyle === 'bars' 
-                      ? 'bg-white text-slate-900 shadow-2xs' 
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                  title="Side-by-side bars view"
-                >
-                  <BarChart3 className="w-3.5 h-3.5" />
-                  <span>Bars</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setChartStyle('line')}
-                  className={`px-2.5 py-1 rounded-lg font-bold text-[11px] flex items-center gap-1 transition-all ${
-                    chartStyle === 'line' 
-                      ? 'bg-white text-slate-900 shadow-2xs' 
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                  title="Smooth timeline curve"
-                >
-                  <LineIcon className="w-3.5 h-3.5" />
-                  <span>Line</span>
-                </button>
+                {/* 2. Style Switcher: Bars vs Line */}
+                <div className="flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200 text-xs shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => setChartStyle('bars')}
+                    className={`px-2 sm:px-2.5 py-1 rounded-lg font-bold text-[11px] flex items-center gap-1 transition-all ${
+                      chartStyle === 'bars' 
+                        ? 'bg-white text-slate-900 shadow-2xs' 
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                    title="Side-by-side bars view"
+                  >
+                    <BarChart3 className="w-3.5 h-3.5" />
+                    <span>Bars</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChartStyle('line')}
+                    className={`px-2 sm:px-2.5 py-1 rounded-lg font-bold text-[11px] flex items-center gap-1 transition-all ${
+                      chartStyle === 'line' 
+                        ? 'bg-white text-slate-900 shadow-2xs' 
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                    title="Smooth timeline curve"
+                  >
+                    <LineIcon className="w-3.5 h-3.5" />
+                    <span>Line</span>
+                  </button>
+                </div>
               </div>
 
               {/* 3. Legend */}
-              <div className="flex items-center gap-2.5 text-xs font-semibold px-1">
+              <div className="flex items-center gap-2.5 text-xs font-semibold px-1 ml-auto sm:ml-0">
                 <span className="flex items-center gap-1.5 text-slate-700">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
                   <span>Prospects</span>
@@ -434,31 +437,31 @@ export default function AnalyticsCharts({ leads = [], campaigns = [] }) {
           </div>
 
           {/* Fixed-Height Activity Info Strip (Prevents ANY layout shift or chart oscillation) */}
-          <div className="mt-3 h-11 px-3.5 rounded-xl border flex items-center justify-between text-xs transition-colors duration-150 bg-slate-50 border-slate-200">
+          <div className="mt-3 h-11 px-3.5 rounded-xl border flex items-center justify-between text-xs transition-colors duration-150 bg-slate-50 border-slate-200 shrink-0">
             {hoveredDay ? (
               <>
-                <span className="font-bold text-slate-800 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  {hoveredDay.fullDate} ({hoveredDay.label}):
+                <span className="font-bold text-slate-800 flex items-center gap-2 truncate">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                  <span className="truncate">{hoveredDay.fullDate} ({hoveredDay.label}):</span>
                 </span>
-                <div className="flex items-center gap-4">
-                  <span className="text-emerald-700 font-bold flex items-center gap-1.5">
+                <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+                  <span className="text-emerald-700 font-bold flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs">
                     <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
-                    {hoveredDay.leads} Prospects Extracted
+                    {hoveredDay.leads} <span className="hidden sm:inline">Prospects</span><span className="sm:hidden">L</span>
                   </span>
-                  <span className="text-violet-700 font-bold flex items-center gap-1.5">
+                  <span className="text-violet-700 font-bold flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs">
                     <span className="w-2 h-2 rounded-full bg-violet-600"></span>
-                    {hoveredDay.sent} Emails Sent
+                    {hoveredDay.sent} <span className="hidden sm:inline">Emails Sent</span><span className="sm:hidden">S</span>
                   </span>
                 </div>
               </>
             ) : (
               <>
-                <span className="text-slate-400 font-medium flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                  Hover over timeline points to inspect activity breakdown
+                <span className="text-slate-400 font-medium flex items-center gap-2 truncate text-[11px] sm:text-xs">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="truncate">Hover or tap timeline to inspect activity</span>
                 </span>
-                <span className="text-slate-400 text-[11px] font-medium hidden sm:inline-block">
+                <span className="text-slate-400 text-[11px] font-medium hidden sm:inline-block shrink-0">
                   {timeRangeMeta.subtext}
                 </span>
               </>
@@ -469,20 +472,20 @@ export default function AnalyticsCharts({ leads = [], campaigns = [] }) {
           {/* VIEW A: SIDE-BY-SIDE GROUPED BARS (NO OVERLAPPING AT ALL) */}
           {/* ========================================================================= */}
           {chartStyle === 'bars' && (
-            <div className="flex-1 flex flex-col justify-end pt-4 pb-0 min-h-0">
-              <div className="h-44 flex items-end justify-between gap-0.5 sm:gap-1 px-4 sm:px-6 relative">
+            <div className="flex-1 flex flex-col justify-end pt-5 sm:pt-4 pb-0 min-h-0">
+              <div className="h-44 flex items-end justify-between gap-0.5 sm:gap-1 px-2 sm:px-6 relative">
                 {/* Subtle horizontal division guide lines in background */}
                 {[0.25, 0.5, 0.75].map(ratio => (
                   <div 
                     key={ratio} 
-                    className="absolute left-4 right-4 sm:left-6 sm:right-6 border-b border-slate-100/90 border-dashed pointer-events-none" 
+                    className="absolute left-2 right-2 sm:left-6 sm:right-6 border-b border-slate-100/90 border-dashed pointer-events-none" 
                     style={{ bottom: `${ratio * 100}%` }} 
                   />
                 ))}
 
                 {timelineData.map((d, idx) => {
-                  const leadHeight = (d.leads / maxVal) * 125;
-                  const sentHeight = (d.sent / maxVal) * 125;
+                  const leadHeight = (d.leads / maxVal) * 105;
+                  const sentHeight = (d.sent / maxVal) * 105;
                   const hasActivity = d.leads > 0 || d.sent > 0;
                   const isDense = dataCount > 14;
                   const isMediumDensity = dataCount >= 9 && dataCount <= 14;
@@ -498,7 +501,7 @@ export default function AnalyticsCharts({ leads = [], campaigns = [] }) {
                     >
                       {/* Count badge on hover or if has activity */}
                       {hasActivity && (
-                        <div className={`mb-2 font-black text-slate-700 bg-slate-100 rounded border border-slate-200 shadow-2xs ${
+                        <div className={`mb-1.5 font-black text-slate-700 bg-slate-100 rounded border border-slate-200 shadow-2xs ${
                           isDense ? 'text-[8px] px-1 py-0.2' : isMediumDensity ? 'text-[9px] px-1 py-0.5' : 'text-[10px] px-1.5 py-0.5'
                         }`}>
                           {d.leads}
@@ -806,38 +809,47 @@ export default function AnalyticsCharts({ leads = [], campaigns = [] }) {
           )}
 
         {/* Footnote stats - Clean, Direct & Professional SaaS Telemetry */}
-        <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 mt-2">
-          <div className="flex items-center gap-2 font-medium text-slate-600">
-            <Activity className="w-4 h-4 text-emerald-600" />
-            <span>Live outreach performance updated automatically</span>
+        <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs text-slate-500 mt-2">
+          <div className="flex items-center gap-2 font-medium text-slate-600 min-w-0">
+            <Activity className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span className="truncate">
+              <span className="hidden sm:inline">Live outreach performance updated automatically</span>
+              <span className="sm:hidden">Live outreach telemetry</span>
+            </span>
           </div>
-          <span className="font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
-            {timeRangeMeta.title} • Live Telemetry
+          <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 sm:py-0.5 rounded-lg border border-emerald-200 whitespace-nowrap shrink-0 text-xs self-start sm:self-auto shadow-2xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>{timeRangeMeta.title}</span>
+            <span className="text-emerald-400">•</span>
+            <span>Live Telemetry</span>
           </span>
         </div>
       </div>
 
-      {/* 2. Live Outbound Activity Feed (1 Column) - Fixed 430px Height, Zero Scrollbar, Matching Velocity Card */}
-      <div className="p-6 sm:p-7 rounded-2xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between min-h-[430px] max-h-[430px]">
+      {/* 2. Live Outbound Activity Feed (1 Column) - Clean Auto-Stretch Card */}
+      <div className="p-5 sm:p-7 rounded-2xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between h-full">
         {/* Header */}
         <div>
-          <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
-            <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-between gap-2.5 pb-3.5 border-b border-slate-100">
+            <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-2xs">
                 <Clock className="w-4 h-4" />
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold text-slate-900 leading-snug truncate">
                   Live Outbound Activity Feed
                 </h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-[11px] text-slate-400 mt-0.5 truncate">
                   Real-time verified events
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[11px] font-semibold shrink-0 whitespace-nowrap shadow-2xs">
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
               <span>Real-Time</span>
             </div>
           </div>
@@ -852,7 +864,7 @@ export default function AnalyticsCharts({ leads = [], campaigns = [] }) {
               recentActivities.map((act) => (
                 <div 
                   key={act.id} 
-                  className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-100 transition-colors"
+                  className="flex items-center gap-2.5 sm:gap-3 p-2.5 rounded-xl bg-slate-50/70 hover:bg-slate-50 border border-slate-100 transition-colors"
                 >
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                     act.type === 'sent' 
@@ -866,16 +878,27 @@ export default function AnalyticsCharts({ leads = [], campaigns = [] }) {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="font-bold text-slate-900 truncate text-xs">
-                        {act.title}
-                      </span>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="font-bold text-slate-900 truncate text-xs min-w-0">
+                        {/* On desktop: full descriptive title */}
+                        <span className="hidden sm:inline truncate">{act.title}</span>
+                        {/* On mobile: Company name is front & center, not cut off by repetitive prefix! */}
+                        <span className="sm:hidden font-extrabold truncate text-slate-900">{act.company}</span>
+                      </div>
                       <span className="text-[10px] font-mono text-slate-400 shrink-0">
                         {act.time}
                       </span>
                     </div>
                     <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5 truncate">
-                      <span className="truncate max-w-[150px] font-medium">{act.city}</span>
+                      {/* On mobile: compact status badge so user knows what action occurred */}
+                      <span className={`sm:hidden inline-flex items-center text-[9px] font-bold px-1.5 py-0.2 rounded shrink-0 ${
+                        act.type === 'sent' 
+                          ? 'bg-emerald-100/80 text-emerald-800' 
+                          : 'bg-sky-100/80 text-sky-800'
+                      }`}>
+                        {act.type === 'sent' ? 'Sent' : 'Lead'}
+                      </span>
+                      <span className="truncate font-medium max-w-[130px] sm:max-w-[170px]">{act.city}</span>
                       <span className="text-slate-300">•</span>
                       <span className="text-slate-400 truncate">{act.category}</span>
                     </div>
@@ -887,7 +910,7 @@ export default function AnalyticsCharts({ leads = [], campaigns = [] }) {
         </div>
 
         {/* Footnote Teaser */}
-        <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+        <div className="pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 mt-4">
           <span className="text-[11px] font-medium text-slate-400">
             Showing latest {recentActivities.length} actions
           </span>

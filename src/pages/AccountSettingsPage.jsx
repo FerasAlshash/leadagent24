@@ -489,17 +489,17 @@ export default function AccountSettingsPage({ leadsCount = 0, campaignsCount = 0
       />
 
       {/* Navigation Tabs (n8n Style) */}
-      <div className="flex items-center gap-6 border-b border-slate-200">
+      <div className="flex items-center gap-4 sm:gap-6 border-b border-slate-200 overflow-x-auto mobile-scroll-tabs">
         <button
           type="button"
           onClick={() => handleTabChange('credentials')}
-          className={`pb-3.5 text-xs sm:text-sm font-bold flex items-center gap-2 transition-all relative cursor-pointer ${
+          className={`pb-3.5 text-xs sm:text-sm font-bold flex items-center gap-2 transition-all relative cursor-pointer shrink-0 whitespace-nowrap ${
             activeTab === 'credentials'
               ? 'text-emerald-700 border-b-2 border-emerald-600 font-extrabold'
               : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <Key className="w-4 h-4" />
+          <Key className="w-4 h-4 shrink-0" />
           <span>Credentials Vault</span>
           <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
             activeTab === 'credentials' 
@@ -513,13 +513,13 @@ export default function AccountSettingsPage({ leadsCount = 0, campaignsCount = 0
         <button
           type="button"
           onClick={() => handleTabChange('user')}
-          className={`pb-3.5 text-xs sm:text-sm font-bold flex items-center gap-2 transition-all relative cursor-pointer ${
+          className={`pb-3.5 text-xs sm:text-sm font-bold flex items-center gap-2 transition-all relative cursor-pointer shrink-0 whitespace-nowrap ${
             activeTab === 'user'
               ? 'text-emerald-700 border-b-2 border-emerald-600 font-extrabold'
               : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <User className="w-4 h-4" />
+          <User className="w-4 h-4 shrink-0" />
           <span>User Profile & Security</span>
         </button>
       </div>
@@ -531,7 +531,7 @@ export default function AccountSettingsPage({ leadsCount = 0, campaignsCount = 0
         <div className="space-y-5 animate-in fade-in duration-150">
           
           {/* Top Search, Filter, Sort & Action Toolbar (n8n Header) */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-4 rounded-3xl border border-slate-200 shadow-2xs">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xs">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1">
               {/* Search Bar */}
               <div className="relative flex-1 max-w-md">

@@ -8,7 +8,8 @@ import {
   ShieldCheck, 
   CheckCircle2, 
   Eye, 
-  EyeOff
+  EyeOff,
+  ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { checkPasswordStrength } from '../utils/passwordValidator';
@@ -57,22 +58,33 @@ export default function AuthPage({ initialMode = 'signin', onBackToHome, onNavig
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-50/60 via-[#f8fafc] to-[#f8fafc] text-slate-900 font-sans flex flex-col justify-between selection:bg-emerald-600 selection:text-white relative overflow-hidden">
       {/* 1. Top Bar: Brand Logo & Title on Left (Clickable to Home) */}
-      <header className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 py-6 flex items-center justify-between">
+      <header className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-10 py-4 sm:py-6 flex items-center justify-between gap-3">
         <button
           type="button"
           onClick={onBackToHome}
-          className="inline-flex items-center gap-3 group cursor-pointer transition-transform active:scale-95 focus:outline-none"
+          className="inline-flex items-center gap-2 sm:gap-3 group cursor-pointer transition-transform active:scale-95 focus:outline-none shrink-0"
           title="Return to LeadAgent24 Home"
         >
-          <LeadAgentLogo className="w-9 h-9 shadow-xs group-hover:scale-105 transition-transform" />
+          <LeadAgentLogo className="w-7 h-7 sm:w-9 sm:h-9 shadow-xs group-hover:scale-105 transition-transform shrink-0" />
           <div className="text-left">
-            <span className="font-black text-xl text-slate-900 tracking-tight block leading-none group-hover:text-emerald-700 transition-colors">
+            <span className="font-black text-sm min-[360px]:text-base sm:text-xl text-slate-900 tracking-tight block leading-none group-hover:text-emerald-700 transition-colors whitespace-nowrap">
               LeadAgent<span className="text-emerald-600">24</span>
             </span>
-            <span className="text-[10px] font-semibold text-slate-400 block mt-0.5">
+            <span className="text-[10px] font-semibold text-slate-400 hidden sm:block mt-0.5">
               Autonomous B2B Lead Engine
             </span>
           </div>
+        </button>
+
+        {/* Dedicated Mobile / Desktop Return Button */}
+        <button
+          type="button"
+          onClick={onBackToHome}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 text-xs font-semibold shadow-2xs transition-all cursor-pointer shrink-0"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Back to Platform</span>
+          <span className="sm:hidden">Back</span>
         </button>
       </header>
 
@@ -105,7 +117,7 @@ export default function AuthPage({ initialMode = 'signin', onBackToHome, onNavig
 
         {/* Centered Auth Card */}
         <div className="w-full max-w-md mx-auto relative z-10">
-          <div className="w-full bg-white rounded-3xl p-7 sm:p-9 border border-slate-200/90 shadow-2xl shadow-slate-200/70">
+          <div className="w-full bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-9 border border-slate-200/90 shadow-2xl shadow-slate-200/70">
           {/* Card Title & Subtitle */}
           <div className="text-center pb-5 border-b border-slate-100">
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
@@ -358,16 +370,17 @@ export default function AuthPage({ initialMode = 'signin', onBackToHome, onNavig
       </div>
     </main>
 
-      {/* 3. Bottom Minimal Bar */}
-      <footer className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 py-5 flex items-center justify-between text-[11px] text-slate-400">
+      {/* 3. Bottom Minimal Bar (Responsive Stacking to prevent broken wrapping) */}
+      <footer className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-10 py-4 sm:py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-[11px] text-slate-400 text-center sm:text-left">
         <button
           type="button"
           onClick={onBackToHome}
-          className="hover:text-slate-700 transition-colors cursor-pointer flex items-center gap-1.5"
+          className="hover:text-slate-700 transition-colors cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-100"
         >
-          <span>&larr; Back to Platform Overview</span>
+          <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
+          <span>Back to Platform Overview</span>
         </button>
-        <span className="select-none font-mono text-[10px] text-slate-400/80">AES-256 Vault • Multi-Tenant Isolation</span>
+        <span className="select-none font-mono text-[10px] text-slate-400">AES-256 Vault • Multi-Tenant Isolation</span>
       </footer>
     </div>
   );

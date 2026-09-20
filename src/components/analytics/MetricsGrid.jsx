@@ -126,31 +126,31 @@ export default function MetricsGrid({ leads = [], campaigns = [] }) {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
       {cards.map((card) => {
         const Icon = card.icon;
         return (
           <div
             key={card.id}
-            className="p-5 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 transition-all duration-200 shadow-2xs hover:shadow-md"
+            className="p-3.5 sm:p-5 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 transition-all duration-200 shadow-2xs hover:shadow-md"
           >
             <div className="flex items-center justify-between">
-              <div className={`w-10 h-10 rounded-xl ${card.bgColor} flex items-center justify-center`}>
-                {card.customIcon ? card.customIcon : <Icon className={`w-5 h-5 ${card.color}`} />}
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl ${card.bgColor} flex items-center justify-center shrink-0`}>
+                {card.customIcon ? card.customIcon : <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${card.color}`} />}
               </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+              <span className="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
                 {card.badge}
               </span>
             </div>
 
-            <div className="mt-4">
-              <span className="text-xs font-semibold text-slate-500 block">
+            <div className="mt-3 sm:mt-4">
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-500 block truncate">
                 {card.label}
               </span>
-              <div className="text-2xl sm:text-3xl font-black text-slate-900 mt-1 tracking-tight">
+              <div className="text-xl sm:text-3xl font-black text-slate-900 mt-0.5 sm:mt-1 tracking-tight">
                 {card.value.toLocaleString()}
               </div>
-              <p className="text-[11px] text-slate-400 mt-1 font-medium truncate">
+              <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 sm:mt-1 font-medium truncate">
                 {card.subtext}
               </p>
             </div>

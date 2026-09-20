@@ -796,11 +796,11 @@ export default function CampaignSettingsPage({
         }
         subtitle="Configure company identity, AI personalization pitch, and dedicated cold email provider settings on this single page."
         actions={
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
             <button
               type="button"
               onClick={handleBackToLeads}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all shadow-2xs cursor-pointer"
+              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all shadow-2xs cursor-pointer text-center whitespace-nowrap"
             >
               Cancel
             </button>
@@ -808,7 +808,7 @@ export default function CampaignSettingsPage({
               type="button"
               onClick={handleSaveAll}
               disabled={savingAll}
-              className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm hover:shadow-md active:scale-95 disabled:opacity-50 cursor-pointer flex items-center gap-2"
+              className="flex-1 sm:flex-none px-5 sm:px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm hover:shadow-md active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 whitespace-nowrap"
             >
               {savingAll && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
               <span>Save All Changes</span>
@@ -866,7 +866,7 @@ export default function CampaignSettingsPage({
       {/* ========================================================================= */}
       {/* SECTION 1: COMPANY PROFILE & VALUE PITCH */}
       {/* ========================================================================= */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-2xs space-y-6">
+      <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-4 sm:p-8 shadow-2xs space-y-6">
         <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
           <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 shadow-2xs">
             <Briefcase className="w-5 h-5" />
@@ -1018,7 +1018,7 @@ export default function CampaignSettingsPage({
       {/* ========================================================================= */}
       {/* SECTION 2: DEDICATED OUTBOUND EMAIL PROVIDER & SENDER IDENTITY */}
       {/* ========================================================================= */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-2xs space-y-6">
+      <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-4 sm:p-8 shadow-2xs space-y-6">
         <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
           <div className="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center shrink-0 shadow-2xs">
             <Mail className="w-5 h-5" />

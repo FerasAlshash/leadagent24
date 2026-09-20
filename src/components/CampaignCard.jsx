@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { 
   Building2, 
   Trash2, 
-  ArrowRight,
   Calendar,
   User,
   Sliders,
@@ -110,8 +109,8 @@ export default function CampaignCard({
     >
       <div>
         {/* 1. Header: Category Tag & Status & Date / Delete */}
-        <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-100">
-          <div className="flex items-center gap-2 min-w-0">
+        <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-100">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-bold truncate">
               <Building2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
               <span className="truncate">{campaign.business_type || 'B2B Outbound'}</span>
@@ -123,8 +122,8 @@ export default function CampaignCard({
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
+          <div className="flex items-center gap-1.5 shrink-0 ml-auto sm:ml-0">
+            <span className="text-[10px] sm:text-[11px] text-slate-400 flex items-center gap-1 font-medium">
               <Calendar className="w-3 h-3 text-slate-400" />
               <span>{formattedDate}</span>
             </span>
@@ -197,32 +196,31 @@ export default function CampaignCard({
         </div>
       </div>
 
-      {/* 5. Bottom Metrics & Open Workspace Action */}
-      <div className="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between">
-        <div className="flex items-center gap-3.5 text-xs">
-          <div>
+      {/* 5. Bottom Metrics & Open Action */}
+      <div className="mt-5 pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
+        <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3.5 text-xs w-full sm:w-auto px-1 sm:px-0">
+          <div className="text-center sm:text-left flex-1 sm:flex-none">
             <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">Scoped</span>
             <span className="font-black text-slate-900 text-sm font-mono">{totalLeads}</span>
           </div>
 
-          <div className="h-5 w-px bg-slate-200" />
+          <div className="h-5 w-px bg-slate-200 shrink-0" />
 
-          <div>
+          <div className="text-center sm:text-left flex-1 sm:flex-none">
             <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">Dispatched</span>
             <span className="font-black text-emerald-700 text-sm font-mono">{sentLeads}</span>
           </div>
 
-          <div className="h-5 w-px bg-slate-200" />
+          <div className="h-5 w-px bg-slate-200 shrink-0" />
 
-          <div>
+          <div className="text-center sm:text-left flex-1 sm:flex-none">
             <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">Remaining</span>
             <span className="font-black text-slate-600 text-sm font-mono">{Math.max(0, totalLeads - sentLeads)}</span>
           </div>
         </div>
 
-        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-50 group-hover:bg-emerald-600 text-slate-600 group-hover:text-white border border-slate-200 group-hover:border-emerald-600 shadow-2xs transition-all">
+        <div className="w-full sm:w-auto inline-flex items-center justify-center py-2 sm:py-1.5 px-3.5 rounded-xl text-xs font-bold bg-slate-50 group-hover:bg-emerald-600 text-slate-600 group-hover:text-white border border-slate-200 group-hover:border-emerald-600 shadow-2xs transition-all">
           <span>Open</span>
-          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
         </div>
       </div>
     </div>

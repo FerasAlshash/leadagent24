@@ -110,8 +110,8 @@ export default function DashboardPage({
 
       {/* 4. Audience & Market Intelligence (50% / 50% Clean Split) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-        {/* 4.1 Top Targeted Locations (50%) - Fixed height, exactly 4 items displayed */}
-        <div className="p-6 sm:p-7 rounded-2xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between h-[400px] min-h-[400px] max-h-[400px] group">
+        {/* 4.1 Top Targeted Locations (50%) */}
+        <div className="p-4 sm:p-7 rounded-2xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between min-h-[380px] sm:h-[400px] group">
           <div>
             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
@@ -169,8 +169,8 @@ export default function DashboardPage({
                     key={idx} 
                     className="h-[54px] p-3 rounded-xl bg-slate-50/80 hover:bg-slate-50 border border-slate-100 transition-colors flex flex-col justify-between"
                   >
-                    <div className="flex items-center justify-between text-xs font-semibold">
-                      <span className="text-slate-900 font-bold truncate max-w-[200px]" title={loc.name}>
+                    <div className="flex items-center justify-between text-xs font-semibold gap-2">
+                      <span className="text-slate-900 font-bold truncate flex-1 min-w-0" title={loc.name}>
                         {loc.name}
                       </span>
                       <span className="px-2.5 py-0.5 rounded bg-white text-emerald-700 font-bold text-[10px] border border-slate-200 shrink-0 font-mono shadow-2xs">
@@ -189,18 +189,19 @@ export default function DashboardPage({
             </div>
           </div>
 
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 mt-2">
-            <span className="text-[11px] font-medium text-slate-500">
+          <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-400 mt-2">
+            <span className="text-[11px] font-medium text-slate-500 truncate min-w-0">
               Filtered by {locationMode === 'country' ? 'Country' : 'City'}
             </span>
-            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
-              {locationStats.length} Unique {locationMode === 'country' ? 'Countries' : 'Cities'}
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200 shrink-0 whitespace-nowrap self-start sm:self-auto">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span>{locationStats.length} Unique {locationMode === 'country' ? 'Countries' : 'Cities'}</span>
             </span>
           </div>
         </div>
 
-        {/* 4.2 Target Niche Breakdown (50%) - Exactly matching height and item dimensions */}
-        <div className="p-6 sm:p-7 rounded-2xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between h-[400px] min-h-[400px] max-h-[400px] group">
+        {/* 4.2 Target Niche Breakdown (50%) */}
+        <div className="p-4 sm:p-7 rounded-2xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between min-h-[380px] sm:h-[400px] group">
           <div>
             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
@@ -216,7 +217,7 @@ export default function DashboardPage({
                   </p>
                 </div>
               </div>
-              <span className="text-[10px] font-bold text-violet-700 bg-violet-50 px-2.5 py-1 rounded-lg border border-violet-200 shrink-0">
+              <span className="text-[10px] sm:text-xs font-bold text-violet-700 bg-violet-50 px-2.5 py-1 rounded-lg border border-violet-200 shrink-0 whitespace-nowrap">
                 {nicheStats.length} Categories
               </span>
             </div>
@@ -233,8 +234,8 @@ export default function DashboardPage({
                     key={idx} 
                     className="h-[54px] p-3 rounded-xl bg-slate-50/80 hover:bg-slate-50 border border-slate-100 transition-colors flex flex-col justify-between"
                   >
-                    <div className="flex items-center justify-between text-xs font-semibold">
-                      <span className="text-slate-900 font-bold truncate max-w-[200px]" title={niche.name}>
+                    <div className="flex items-center justify-between text-xs font-semibold gap-2">
+                      <span className="text-slate-900 font-bold truncate flex-1 min-w-0" title={niche.name}>
                         {niche.name}
                       </span>
                       <span className="px-2.5 py-0.5 rounded bg-white text-violet-700 font-bold text-[10px] border border-slate-200 shrink-0 font-mono shadow-2xs">
@@ -253,19 +254,21 @@ export default function DashboardPage({
             </div>
           </div>
 
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 mt-2">
-            <span className="text-[11px] font-medium text-slate-500">
-              Proprietary B2B market & industry taxonomy
+          <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-400 mt-2">
+            <span className="text-[11px] font-medium text-slate-500 truncate min-w-0">
+              <span className="hidden sm:inline">Proprietary B2B market & industry taxonomy</span>
+              <span className="sm:hidden">Industry taxonomy</span>
             </span>
-            <span className="text-[11px] font-bold text-violet-700 bg-violet-50 px-2.5 py-0.5 rounded-md border border-violet-200">
-              Verified Segments
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-violet-700 bg-violet-50 px-2.5 py-0.5 rounded-md border border-violet-200 shrink-0 whitespace-nowrap self-start sm:self-auto">
+              <span className="w-1.5 h-1.5 rounded-full bg-violet-500" />
+              <span>Verified Segments</span>
             </span>
           </div>
         </div>
       </div>
 
       {/* 5. Full-Width Executive Section: Active Campaigns Benchmark */}
-      <div className="p-6 sm:p-7 rounded-2xl bg-white border border-slate-200 shadow-2xs group">
+      <div className="p-4 sm:p-7 rounded-2xl bg-white border border-slate-200 shadow-2xs group">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center shrink-0 shadow-2xs">

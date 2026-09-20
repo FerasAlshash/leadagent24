@@ -20,26 +20,26 @@ export default function PageHeader({
   className = ''
 }) {
   return (
-    <div className={`p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-6 ${className}`}>
+    <div className={`p-4 sm:p-8 rounded-2xl sm:rounded-3xl bg-white border border-slate-200 shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 ${className}`}>
       {/* Left: Icon + Text / Navigation / Metadata */}
-      <div className="flex items-start gap-4 min-w-0 flex-1">
+      <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
         {Icon && (
-          <div className={`w-14 h-14 rounded-2xl ${iconBg} flex items-center justify-center font-bold text-xl shadow-xs shrink-0 mt-0.5`}>
-            {React.isValidElement(Icon) ? Icon : <Icon className="w-7 h-7 text-white" />}
+          <div className={`w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl ${iconBg} flex items-center justify-center font-bold text-lg sm:text-xl shadow-xs shrink-0 mt-0.5`}>
+            {React.isValidElement(Icon) ? Icon : <Icon className="w-5 h-5 sm:w-7 sm:h-7 text-white" />}
           </div>
         )}
 
-        <div className="min-w-0 flex-1 space-y-2">
+        <div className="min-w-0 flex-1 space-y-1.5 sm:space-y-2">
           {/* Top Badges Row (Categories / Tags) */}
           {badges && (
-            <div className="flex flex-wrap items-center gap-2 mb-1.5">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1 sm:mb-1.5">
               {badges}
             </div>
           )}
 
           {/* Main Page Title & Optional Title Badge */}
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight break-words">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight break-words">
               {title}
             </h1>
             {titleBadge}
@@ -54,7 +54,7 @@ export default function PageHeader({
 
           {/* Structured Metadata Ribbon (e.g. Campaign Details Chips) */}
           {metadata && (
-            <div className="flex flex-wrap items-center gap-2 pt-1">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-1">
               {metadata}
             </div>
           )}
@@ -76,9 +76,9 @@ export default function PageHeader({
         </div>
       </div>
 
-      {/* Right: Actions Controls */}
+      {/* Right: Actions Controls (Full width on mobile if needed) */}
       {actions && (
-        <div className="flex items-center gap-3 pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100 shrink-0">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 shrink-0 w-full lg:w-auto">
           {actions}
         </div>
       )}

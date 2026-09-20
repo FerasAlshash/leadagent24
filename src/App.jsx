@@ -796,65 +796,103 @@ export default function App() {
       {/* 2. Main Workspace Layout */}
       <div className="flex-1 flex flex-col min-w-0 lg:pl-72 transition-all">
         {/* Top Header Bar */}
-        <header className="h-20 px-4 sm:px-6 lg:px-8 border-b border-slate-200 bg-white sticky top-0 z-30 flex items-center justify-between gap-4 shadow-2xs">
-          <div className="flex items-center gap-3">
+        <header className="h-16 sm:h-20 px-3.5 sm:px-6 lg:px-8 border-b border-slate-200 bg-white sticky top-0 z-30 flex items-center justify-between gap-2 sm:gap-4 shadow-2xs">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
             {/* Mobile Hamburger Toggle */}
             <button
               type="button"
               onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900"
+              className="lg:hidden p-1.5 sm:p-2 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 shrink-0"
+              aria-label="Open Navigation Menu"
             >
               <Menu className="w-5 h-5" />
             </button>
 
             {/* Breadcrumb / Title */}
-            <div>
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <span>Workspace</span>
-                <span>/</span>
-                {isDashboard && <span className="text-slate-700 font-semibold">Dashboard</span>}
-                {isCampaigns && <span className="text-slate-700 font-semibold">My Campaigns</span>}
-                {isAudit && <span className="text-emerald-700 font-semibold">Activity Audit</span>}
-                {isSettings && <span className="text-slate-700 font-semibold">Account & Security</span>}
-                {isAdminPath && <span className="text-purple-700 font-semibold">Admin Automation</span>}
+            <div className="min-w-0 flex-1">
+              {/* Responsive Breadcrumb Path: compact text on mobile, full text on desktop */}
+              <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-slate-400 overflow-hidden text-ellipsis whitespace-nowrap min-w-0">
+                <span className="hidden min-[380px]:inline">Workspace</span>
+                <span className="hidden min-[380px]:inline text-slate-300">/</span>
+                {isDashboard && <span className="text-slate-600 font-semibold truncate">Dashboard</span>}
+                {isCampaigns && <span className="text-slate-600 font-semibold truncate">My Campaigns</span>}
+                {isAudit && <span className="text-emerald-700 font-semibold truncate">Activity Audit</span>}
+                {isSettings && <span className="text-slate-600 font-semibold truncate">Account & Security</span>}
+                {isAdminPath && <span className="text-purple-700 font-semibold truncate">Admin Automation</span>}
                 {isCampaignDetail && (
                   <>
                     <button 
                       onClick={() => navigate('/campaigns')}
-                      className="hover:underline text-slate-500 cursor-pointer"
+                      className="hover:underline text-slate-500 cursor-pointer truncate"
                     >
                       Campaigns
                     </button>
-                    <span>/</span>
+                    <span className="text-slate-300">/</span>
                     <button
                       onClick={() => navigate(`/campaigns/${currentCampaignId}`)}
-                      className={`hover:underline cursor-pointer ${pathname.endsWith('/settings') ? 'text-slate-500' : 'text-emerald-700 font-bold'} flex items-center gap-1`}
+                      className={`hover:underline cursor-pointer ${pathname.endsWith('/settings') ? 'text-slate-500' : 'text-emerald-700 font-bold'} flex items-center gap-1 truncate max-w-[120px] sm:max-w-[200px]`}
                     >
-                      <Briefcase className="w-3 h-3" />
-                      <span>{headerCampaign?.company_name || headerCampaign?.title || 'Campaign Workspace'}</span>
+                      <Briefcase className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
+                      <span className="truncate">{headerCampaign?.company_name || headerCampaign?.title || 'Campaign Workspace'}</span>
                     </button>
                     {pathname.endsWith('/settings') && (
                       <>
-                        <span>/</span>
-                        <span className="text-emerald-700 font-bold">Settings & Outbound</span>
+                        <span className="text-slate-300">/</span>
+                        <span className="text-emerald-700 font-bold truncate">Settings</span>
                       </>
                     )}
                   </>
                 )}
               </div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 capitalize leading-tight mt-0.5">
-                {isDashboard && 'Analytics & Outreach Intelligence'}
-                {isCampaigns && 'My Outbound Campaigns'}
-                {isAudit && 'Activity & Outbound Audit Log'}
-                {isCampaignDetail && (pathname.endsWith('/settings') ? 'Campaign Settings & Outbound Architecture' : (headerCampaign?.company_name || headerCampaign?.title || 'Campaign Workspace'))}
-                {isSettings && 'Account Settings & Security'}
-                {isAdminPath && '👑 Admin Automation Console'}
+
+              {/* Responsive Page Title: scales smoothly across screen sizes so it never truncates awkwardly */}
+              <h2 className="text-xs min-[360px]:text-[13px] min-[420px]:text-sm sm:text-lg font-bold text-slate-900 capitalize leading-tight mt-0.5 truncate">
+                {isDashboard && (
+                  <>
+                    <span className="hidden sm:inline">Analytics & Outreach Intelligence</span>
+                    <span className="sm:hidden">Analytics & Outreach</span>
+                  </>
+                )}
+                {isCampaigns && (
+                  <>
+                    <span className="hidden sm:inline">My Outbound Campaigns</span>
+                    <span className="sm:hidden">Outbound Campaigns</span>
+                  </>
+                )}
+                {isAudit && (
+                  <>
+                    <span className="hidden sm:inline">Activity & Outbound Audit Log</span>
+                    <span className="sm:hidden">Activity Audit Log</span>
+                  </>
+                )}
+                {isCampaignDetail && (
+                  pathname.endsWith('/settings') ? (
+                    <>
+                      <span className="hidden sm:inline">Campaign Settings & Outbound Architecture</span>
+                      <span className="sm:hidden">Campaign Settings</span>
+                    </>
+                  ) : (
+                    headerCampaign?.company_name || headerCampaign?.title || 'Campaign Workspace'
+                  )
+                )}
+                {isSettings && (
+                  <>
+                    <span className="hidden sm:inline">Account Settings & Security</span>
+                    <span className="sm:hidden">Account & Security</span>
+                  </>
+                )}
+                {isAdminPath && (
+                  <>
+                    <span className="hidden sm:inline">👑 Admin Automation Console</span>
+                    <span className="sm:hidden">👑 Admin Console</span>
+                  </>
+                )}
               </h2>
             </div>
           </div>
 
           {/* Notifications, User Profile & Logout */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {/* Dedicated Notifications Bell Dropdown */}
             <NotificationDropdown
               notifications={notifications}
@@ -863,9 +901,9 @@ export default function App() {
               onClearAll={handleClearAllNotifications}
             />
 
-            <div className="flex items-center pl-3 border-l border-slate-200">
+            <div className="flex items-center pl-2 sm:pl-3 border-l border-slate-200">
               <div 
-                className="w-9 h-9 rounded-full bg-emerald-600 flex items-center justify-center text-white text-sm font-bold shadow-xs shrink-0 aspect-square cursor-default ring-2 ring-emerald-500/20 select-none"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs sm:text-sm font-bold shadow-xs shrink-0 aspect-square cursor-default ring-2 ring-emerald-500/20 select-none"
                 title={user.email || 'User Profile'}
               >
                 {user.email ? user.email.charAt(0).toUpperCase() : 'U'}
@@ -875,7 +913,7 @@ export default function App() {
         </header>
 
         {/* 3. Dynamic Page View Outlet */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 p-3.5 sm:p-6 lg:p-8">
           <Suspense fallback={<PageLoadingFallback />}>
             <Routes>
               <Route 

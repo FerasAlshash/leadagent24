@@ -746,20 +746,20 @@ export default function CampaignDetailPage({
         metadata={
           <>
             {campaign.business_type && (
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-50 border border-slate-200/90 text-xs font-semibold text-slate-700 shadow-2xs">
-                <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                <span>{campaign.business_type}</span>
+              <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-slate-50 border border-slate-200/90 text-[11px] sm:text-xs font-semibold text-slate-700 shadow-2xs">
+                <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span className="truncate">{campaign.business_type}</span>
               </div>
             )}
 
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-50 border border-slate-200/90 text-xs font-semibold text-slate-700 shadow-2xs">
-              <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
+            <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-slate-50 border border-slate-200/90 text-[11px] sm:text-xs font-semibold text-slate-700 shadow-2xs">
+              <MessageSquare className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <span>{campaign.email_style || 'Professional'} Tone</span>
             </div>
 
             {campaign.sender_name && (
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-50 border border-slate-200/90 text-xs font-semibold text-slate-700 shadow-2xs">
-                <Users className="w-3.5 h-3.5 text-slate-400" />
+              <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-slate-50 border border-slate-200/90 text-[11px] sm:text-xs font-semibold text-slate-700 shadow-2xs">
+                <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                 <span className="text-slate-400 font-normal">Sender:</span>
                 <span className="font-bold text-slate-800">{campaign.sender_name}</span>
               </div>
@@ -768,24 +768,24 @@ export default function CampaignDetailPage({
             <button
               type="button"
               onClick={() => navigate(`/campaigns/${campaign.id}/settings`)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl border text-xs font-semibold shadow-2xs transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl border text-[11px] sm:text-xs font-semibold shadow-2xs transition-all cursor-pointer max-w-full ${
                 campaignEmailData?.configured && campaignEmailData?.integration
                   ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900 hover:bg-emerald-100/70 hover:border-emerald-300'
                   : 'bg-amber-50/70 border-amber-200/90 text-amber-900 hover:bg-amber-100/80 hover:border-amber-300'
               }`}
               title="Configure dedicated sender identity & email provider for this campaign"
             >
-              <Mail className={`w-3.5 h-3.5 ${campaignEmailData?.configured ? 'text-emerald-600' : 'text-amber-600'}`} />
-              <span className="opacity-70 font-normal">Outbound:</span>
+              <Mail className={`w-3.5 h-3.5 shrink-0 ${campaignEmailData?.configured ? 'text-emerald-600' : 'text-amber-600'}`} />
+              <span className="opacity-70 font-normal shrink-0">Outbound:</span>
               {campaignEmailData?.configured && campaignEmailData?.integration ? (
-                <span className="font-bold flex items-center gap-1.5">
-                  <span>{campaignEmailData.integration.sender_email}</span>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-200/70 text-emerald-900 font-mono uppercase font-bold">
+                <span className="font-bold flex items-center gap-1.5 truncate min-w-0">
+                  <span className="truncate max-w-[125px] sm:max-w-none">{campaignEmailData.integration.sender_email}</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-200/70 text-emerald-900 font-mono uppercase font-bold shrink-0">
                     {campaignEmailData.integration.provider}
                   </span>
                 </span>
               ) : (
-                <span className="font-bold flex items-center gap-1 text-amber-800">
+                <span className="font-bold flex items-center gap-1 text-amber-800 shrink-0">
                   <AlertCircle className="w-3 h-3 text-amber-600 shrink-0" />
                   <span>Not Configured</span>
                 </span>
@@ -794,29 +794,49 @@ export default function CampaignDetailPage({
           </>
         }
         actions={
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 border-t lg:border-t-0 lg:border-l border-slate-200 pt-4 lg:pt-0 lg:pl-6 shrink-0">
+          <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-nowrap sm:items-center sm:gap-3 border-t lg:border-t-0 lg:border-l border-slate-200 pt-4 lg:pt-0 lg:pl-6 w-full lg:w-auto shrink-0">
             {/* 1. Scoped Leads */}
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-center min-w-[95px] flex-1 sm:flex-none">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Scoped Leads</span>
-              <span className="text-2xl font-black text-slate-900 block mt-0.5">{stats.total}</span>
-              <span className="text-[10px] text-slate-400 font-medium block">Total extracted</span>
+            <div className="p-2 sm:p-3.5 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-200 text-center min-w-0 sm:min-w-[95px] sm:flex-none">
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block tracking-tight sm:tracking-wider truncate">
+                <span className="hidden sm:inline">Scoped Leads</span>
+                <span className="sm:hidden">Scoped</span>
+              </span>
+              <span className="text-xl sm:text-2xl font-black text-slate-900 block mt-0.5 font-mono">{stats.total}</span>
+              <span className="text-[9px] sm:text-[10px] text-slate-400 font-medium block truncate">
+                <span className="hidden sm:inline">Total extracted</span>
+                <span className="sm:hidden">Total</span>
+              </span>
             </div>
 
             {/* 2. Outreach Sent (clean, no checkmark emoji) */}
-            <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 text-center min-w-[95px] flex-1 sm:flex-none">
-              <span className="text-[10px] uppercase font-bold text-emerald-800 block tracking-wider">Outreach Sent</span>
-              <span className="text-2xl font-black text-emerald-700 block mt-0.5">{stats.sent}</span>
-              <span className="text-[10px] text-emerald-800 font-medium block">
-                {stats.withoutEmail > 0 ? `${stats.withoutEmail} without email` : 'All contacted'}
+            <div className="p-2 sm:p-3.5 rounded-xl sm:rounded-2xl bg-emerald-50/70 border border-emerald-200 text-center min-w-0 sm:min-w-[95px] sm:flex-none">
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-800 block tracking-tight sm:tracking-wider truncate">
+                <span className="hidden sm:inline">Outreach Sent</span>
+                <span className="sm:hidden">Sent</span>
+              </span>
+              <span className="text-xl sm:text-2xl font-black text-emerald-700 block mt-0.5 font-mono">{stats.sent}</span>
+              <span className="text-[9px] sm:text-[10px] text-emerald-800 font-medium block truncate">
+                {stats.withoutEmail > 0 ? (
+                  <>
+                    <span className="hidden sm:inline">{stats.withoutEmail} without email</span>
+                    <span className="sm:hidden">{stats.withoutEmail} no email</span>
+                  </>
+                ) : (
+                  'All contacted'
+                )}
               </span>
             </div>
 
             {/* 3. Outreach Delivery Rate (Percentage between sent and unsent) */}
-            <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200 text-center min-w-[95px] flex-1 sm:flex-none">
-              <span className="text-[10px] uppercase font-bold text-blue-800 block tracking-wider">Outreach Rate</span>
-              <span className="text-2xl font-black text-blue-800 block mt-0.5">{stats.rate}%</span>
-              <span className="text-[10px] text-blue-700 font-medium block">
-                {stats.sent} of {stats.total} sent
+            <div className="p-2 sm:p-3.5 rounded-xl sm:rounded-2xl bg-blue-50/70 border border-blue-200 text-center min-w-0 sm:min-w-[95px] sm:flex-none">
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-blue-800 block tracking-tight sm:tracking-wider truncate">
+                <span className="hidden sm:inline">Outreach Rate</span>
+                <span className="sm:hidden">Rate</span>
+              </span>
+              <span className="text-xl sm:text-2xl font-black text-blue-800 block mt-0.5 font-mono">{stats.rate}%</span>
+              <span className="text-[9px] sm:text-[10px] text-blue-700 font-medium block truncate">
+                <span className="hidden sm:inline">{stats.sent} of {stats.total} sent</span>
+                <span className="sm:hidden">{stats.sent}/{stats.total} sent</span>
               </span>
             </div>
           </div>
@@ -835,7 +855,7 @@ export default function CampaignDetailPage({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
         <div>
           <div className="flex items-center gap-2.5">
-            <Users className="w-5 h-5 text-emerald-600" />
+            <Users className="w-5 h-5 text-emerald-600 shrink-0" />
             <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
               Prospects & Leads
             </h2>
@@ -848,24 +868,24 @@ export default function CampaignDetailPage({
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
           <button
             type="button"
             onClick={() => navigate(`/campaigns/${campaign.id}/settings`)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all shadow-2xs cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all shadow-2xs cursor-pointer shrink-0"
             title="Configure Pitch & Outbound Delivery Architecture"
           >
-            <Settings className="w-4 h-4 text-slate-500" />
+            <Settings className="w-4 h-4 text-slate-500 shrink-0" />
             <span>Settings</span>
           </button>
 
           <button
             type="button"
             onClick={handleLaunchSearchClick}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm hover:shadow-md active:scale-95 cursor-pointer"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm hover:shadow-md active:scale-95 cursor-pointer truncate"
           >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            <span>Launch Outbound Search</span>
+            <Play className="w-3.5 h-3.5 fill-current shrink-0" />
+            <span className="truncate">Launch Outbound Search</span>
           </button>
         </div>
       </div>
@@ -922,159 +942,168 @@ export default function CampaignDetailPage({
               {/* Vertical divider */}
               <div className="h-5 w-px bg-slate-200 hidden sm:block mx-1" />
 
-              {/* 4. Social Media Dropdown */}
-              <div className="relative" ref={socialDropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsSocialDropdownOpen(prev => !prev);
-                    setIsLocationDropdownOpen(false);
-                  }}
-                  className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                    socialFilter !== 'all'
-                      ? 'bg-blue-50 text-blue-800 border-blue-300 font-bold shadow-2xs'
-                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  <Share2 className="w-3.5 h-3.5 text-slate-400" />
-                  <span>
-                    {socialFilter === 'all' 
-                      ? 'Social Channels' 
-                      : socialFilter === 'linkedin' ? 'LinkedIn'
-                      : socialFilter === 'facebook' ? 'Facebook'
-                      : 'Instagram'}
-                  </span>
-                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isSocialDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {isSocialDropdownOpen && (
-                  <div className="absolute left-0 mt-1.5 w-48 rounded-xl bg-white border border-slate-200 shadow-xl py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
-                    <button
-                      type="button"
-                      onClick={() => { setSocialFilter('all'); setIsSocialDropdownOpen(false); }}
-                      className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 ${
-                        socialFilter === 'all' ? 'font-bold text-blue-700 bg-blue-50/50' : 'text-slate-700'
-                      }`}
-                    >
-                      <span>All Channels</span>
-                      <span className="text-[10px] text-slate-400 font-mono">({stats.total})</span>
-                    </button>
-                    <div className="h-px bg-slate-100 my-1" />
-                    <button
-                      type="button"
-                      onClick={() => { setSocialFilter('linkedin'); setIsSocialDropdownOpen(false); }}
-                      className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 ${
-                        socialFilter === 'linkedin' ? 'font-bold text-blue-700 bg-blue-50/50' : 'text-slate-700'
-                      }`}
-                    >
-                      <span>LinkedIn</span>
-                      <span className="text-[10px] text-slate-400 font-mono">({stats.withLinkedIn})</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setSocialFilter('facebook'); setIsSocialDropdownOpen(false); }}
-                      className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 ${
-                        socialFilter === 'facebook' ? 'font-bold text-blue-700 bg-blue-50/50' : 'text-slate-700'
-                      }`}
-                    >
-                      <span>Facebook</span>
-                      <span className="text-[10px] text-slate-400 font-mono">({stats.withFacebook})</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setSocialFilter('instagram'); setIsSocialDropdownOpen(false); }}
-                      className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 ${
-                        socialFilter === 'instagram' ? 'font-bold text-blue-700 bg-blue-50/50' : 'text-slate-700'
-                      }`}
-                    >
-                      <span>Instagram</span>
-                      <span className="text-[10px] text-slate-400 font-mono">({stats.withInstagram})</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* 5. Dynamic Location Filter (Button if 1 city, Dropdown if > 1 city) */}
-              {distinctCities.length === 1 && (
-                <button
-                  type="button"
-                  onClick={() => setLocationFilter(prev => prev === distinctCities[0].name ? 'all' : distinctCities[0].name)}
-                  className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                    locationFilter === distinctCities[0].name
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
-                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span>{distinctCities[0].name}</span>
-                  <span className={locationFilter === distinctCities[0].name ? 'text-emerald-100' : 'text-slate-400'}>
-                    ({distinctCities[0].count})
-                  </span>
-                </button>
-              )}
-
-              {distinctCities.length > 1 && (
-                <div className="relative" ref={locationDropdownRef}>
+              {/* Dropdowns wrapper: 2-column grid on mobile, flex on sm: */}
+              <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center">
+                {/* 4. Social Media Dropdown */}
+                <div className="relative w-full sm:w-auto" ref={socialDropdownRef}>
                   <button
                     type="button"
                     onClick={() => {
-                      setIsLocationDropdownOpen(prev => !prev);
-                      setIsSocialDropdownOpen(false);
+                      setIsSocialDropdownOpen(prev => !prev);
+                      setIsLocationDropdownOpen(false);
                     }}
-                    className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                      locationFilter !== 'all'
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300 font-bold shadow-2xs'
+                    className={`w-full sm:w-auto justify-between sm:justify-start px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                      socialFilter !== 'all'
+                        ? 'bg-blue-50 text-blue-800 border-blue-300 font-bold shadow-2xs'
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                     }`}
                   >
-                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{locationFilter === 'all' ? 'All Locations' : locationFilter}</span>
-                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
+                    <div className="flex items-center gap-1.5 truncate">
+                      <Share2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span className="truncate">
+                        {socialFilter === 'all' 
+                          ? 'Channels' 
+                          : socialFilter === 'linkedin' ? 'LinkedIn'
+                          : socialFilter === 'facebook' ? 'Facebook'
+                          : 'Instagram'}
+                      </span>
+                    </div>
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${isSocialDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
 
-                  {isLocationDropdownOpen && (
-                    <div className="absolute left-0 mt-1.5 w-52 rounded-xl bg-white border border-slate-200 shadow-xl py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
+                  {isSocialDropdownOpen && (
+                    <div className="absolute left-0 mt-1.5 w-48 rounded-xl bg-white border border-slate-200 shadow-xl py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
                       <button
                         type="button"
-                        onClick={() => { setLocationFilter('all'); setIsLocationDropdownOpen(false); }}
+                        onClick={() => { setSocialFilter('all'); setIsSocialDropdownOpen(false); }}
                         className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 ${
-                          locationFilter === 'all' ? 'font-bold text-emerald-700 bg-emerald-50/50' : 'text-slate-700'
+                          socialFilter === 'all' ? 'font-bold text-blue-700 bg-blue-50/50' : 'text-slate-700'
                         }`}
                       >
-                        <span>All Locations</span>
-                        <span className="text-[10px] text-slate-400 font-mono">({leads.length})</span>
+                        <span>All Channels</span>
+                        <span className="text-[10px] text-slate-400 font-mono">({stats.total})</span>
                       </button>
                       <div className="h-px bg-slate-100 my-1" />
-                      {distinctCities.map(city => (
-                        <button
-                          key={city.name}
-                          type="button"
-                          onClick={() => { setLocationFilter(city.name); setIsLocationDropdownOpen(false); }}
-                          className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 ${
-                            locationFilter === city.name ? 'font-bold text-emerald-700 bg-emerald-50/50' : 'text-slate-700'
-                          }`}
-                        >
-                          <span className="truncate">{city.name}</span>
-                          <span className="text-[10px] text-slate-400 font-mono ml-2">({city.count})</span>
-                        </button>
-                      ))}
+                      <button
+                        type="button"
+                        onClick={() => { setSocialFilter('linkedin'); setIsSocialDropdownOpen(false); }}
+                        className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 ${
+                          socialFilter === 'linkedin' ? 'font-bold text-blue-700 bg-blue-50/50' : 'text-slate-700'
+                        }`}
+                      >
+                        <span>LinkedIn</span>
+                        <span className="text-[10px] text-slate-400 font-mono">({stats.withLinkedIn})</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setSocialFilter('facebook'); setIsSocialDropdownOpen(false); }}
+                        className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 ${
+                          socialFilter === 'facebook' ? 'font-bold text-blue-700 bg-blue-50/50' : 'text-slate-700'
+                        }`}
+                      >
+                        <span>Facebook</span>
+                        <span className="text-[10px] text-slate-400 font-mono">({stats.withFacebook})</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setSocialFilter('instagram'); setIsSocialDropdownOpen(false); }}
+                        className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 ${
+                          socialFilter === 'instagram' ? 'font-bold text-blue-700 bg-blue-50/50' : 'text-slate-700'
+                        }`}
+                      >
+                        <span>Instagram</span>
+                        <span className="text-[10px] text-slate-400 font-mono">({stats.withInstagram})</span>
+                      </button>
                     </div>
                   )}
                 </div>
-              )}
+
+                {/* 5. Dynamic Location Filter (Button if 1 city, Dropdown if > 1 city) */}
+                {distinctCities.length === 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setLocationFilter(prev => prev === distinctCities[0].name ? 'all' : distinctCities[0].name)}
+                    className={`w-full sm:w-auto justify-between sm:justify-start px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                      locationFilter === distinctCities[0].name
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 truncate">
+                      <MapPin className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">{distinctCities[0].name}</span>
+                    </div>
+                    <span className={`shrink-0 ${locationFilter === distinctCities[0].name ? 'text-emerald-100' : 'text-slate-400'}`}>
+                      ({distinctCities[0].count})
+                    </span>
+                  </button>
+                )}
+
+                {distinctCities.length > 1 && (
+                  <div className="relative w-full sm:w-auto" ref={locationDropdownRef}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsLocationDropdownOpen(prev => !prev);
+                        setIsSocialDropdownOpen(false);
+                      }}
+                      className={`w-full sm:w-auto justify-between sm:justify-start px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                        locationFilter !== 'all'
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-300 font-bold shadow-2xs'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 truncate">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="truncate">{locationFilter === 'all' ? 'All Locations' : locationFilter}</span>
+                      </div>
+                      <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {isLocationDropdownOpen && (
+                      <div className="absolute right-0 sm:left-0 mt-1.5 w-52 rounded-xl bg-white border border-slate-200 shadow-xl py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
+                        <button
+                          type="button"
+                          onClick={() => { setLocationFilter('all'); setIsLocationDropdownOpen(false); }}
+                          className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 ${
+                            locationFilter === 'all' ? 'font-bold text-emerald-700 bg-emerald-50/50' : 'text-slate-700'
+                          }`}
+                        >
+                          <span>All Locations</span>
+                          <span className="text-[10px] text-slate-400 font-mono">({leads.length})</span>
+                        </button>
+                        <div className="h-px bg-slate-100 my-1" />
+                        {distinctCities.map(city => (
+                          <button
+                            key={city.name}
+                            type="button"
+                            onClick={() => { setLocationFilter(city.name); setIsLocationDropdownOpen(false); }}
+                            className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 ${
+                              locationFilter === city.name ? 'font-bold text-emerald-700 bg-emerald-50/50' : 'text-slate-700'
+                            }`}
+                          >
+                            <span className="truncate">{city.name}</span>
+                            <span className="text-[10px] text-slate-400 font-mono ml-2">({city.count})</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Right: Search Box & Export CSV */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-row items-center gap-2 sm:gap-3 w-full xl:w-auto">
               {/* Search Box */}
-              <div className="relative">
+              <div className="relative flex-1 sm:w-60">
                 <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   placeholder="Search company, city, email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:outline-hidden focus:border-emerald-500 w-44 sm:w-60"
+                  className="pl-8 pr-3 py-2 sm:py-1.5 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:outline-hidden focus:border-emerald-500 w-full"
                 />
               </div>
 
@@ -1083,10 +1112,11 @@ export default function CampaignDetailPage({
                 type="button"
                 onClick={exportCSV}
                 disabled={filteredLeads.length === 0}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-2xs disabled:opacity-50"
+                className="flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-2xs disabled:opacity-50 shrink-0 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>Export CSV</span>
+                <span className="hidden sm:inline">Export CSV</span>
+                <span className="sm:hidden">CSV</span>
               </button>
             </div>
           </div>
@@ -1473,7 +1503,7 @@ export default function CampaignDetailPage({
                   </table>
                 </div>
 
-                {/* 2. MOBILE & TABLET VIEW (Responsive Lead Cards - Zero Horizontal Scrolling) */}
+                {/* 2. MOBILE & TABLET VIEW (Compact, Streamlined Lead Cards) */}
                 <div className="block lg:hidden divide-y divide-slate-100">
                   {filteredLeads.map((lead, index) => {
                     const title = lead.Company_Name || lead.title || 'Untitled';
@@ -1489,167 +1519,160 @@ export default function CampaignDetailPage({
                     const googleMapsUrl = lead.url || lead.maps_url || lead.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([title, address].filter(Boolean).join(', '))}`;
 
                     return (
-                      <div key={lead.id || index} className="p-4 sm:p-5 space-y-3.5 hover:bg-slate-50/60 transition-colors">
-                        {/* Mobile Header: # Index, Company Name, Category, and Status */}
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-start gap-2.5">
-                            <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-500 font-mono text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                      <div key={lead.id || index} className="p-3.5 sm:p-4 space-y-2.5 hover:bg-slate-50/50 transition-colors">
+                        {/* Header: # Index, Title, Category Badge, Rating, and Status Badge */}
+                        <div className="flex items-start justify-between gap-2.5">
+                          <div className="flex items-start gap-2 min-w-0 flex-1">
+                            <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-600 font-mono text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
                               {index + 1}
                             </span>
-                            <div>
-                              <h4 className="font-extrabold text-slate-900 text-sm sm:text-base leading-snug">
+                            <div className="min-w-0 flex-1">
+                              <h4 className="font-extrabold text-slate-900 text-sm leading-snug line-clamp-1" title={title}>
                                 {title}
                               </h4>
-                              {category && (
-                                <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-semibold rounded-md bg-slate-100 text-slate-700 border border-slate-200">
-                                  {category}
-                                </span>
-                              )}
+                              <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                                {category && (
+                                  <span className="inline-block px-1.5 py-0.2 text-[10px] font-semibold rounded bg-slate-100 text-slate-600 border border-slate-200 truncate max-w-[130px]">
+                                    {category}
+                                  </span>
+                                )}
+                                {ratingInfo.score && (
+                                  <div className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-800 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200/70 font-semibold">
+                                    <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+                                    <span>{ratingInfo.score}</span>
+                                    {ratingInfo.reviews && (
+                                      <span className="text-slate-400 font-normal font-sans text-[9px]">({ratingInfo.reviews})</span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
 
                           {/* Outreach Status Pill */}
                           <div className="shrink-0">
                             {isSent ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-900 font-bold text-xs shadow-2xs">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-900 font-bold text-[11px] shadow-2xs">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                                 <span>Sent</span>
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-500 font-medium text-xs">
-                                <MailX className="w-3.5 h-3.5 text-slate-400" />
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-500 font-medium text-[11px]">
+                                <MailX className="w-3 h-3 text-slate-400" />
                                 <span>{email ? 'Pending' : 'No Email'}</span>
                               </span>
                             )}
                           </div>
                         </div>
 
-                        {/* Visual Gold Stars Rating */}
-                        <div className="flex items-center gap-2 pl-8.5">
-                          <div className="flex items-center gap-0.5">
-                            {[1, 2, 3, 4, 5].map((starIdx) => {
-                              const filled = starIdx <= Math.round(Number(ratingInfo.score));
-                              return (
-                                <Star 
-                                  key={starIdx} 
-                                  className={`w-4 h-4 ${filled ? 'fill-amber-400 text-amber-400' : 'fill-slate-100 text-slate-300'}`} 
-                                />
-                              );
-                            })}
-                          </div>
-                          <span className="text-xs font-black text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md font-mono">
-                            {ratingInfo.score}
-                          </span>
-                          {ratingInfo.reviews && (
-                            <span className="text-xs text-slate-400 font-medium">
-                              ({ratingInfo.reviews} Google reviews)
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Mobile Details Grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-8.5 pt-1 text-xs">
-                          {/* Direct Phone */}
-                          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 truncate">
-                              <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-200 shrink-0">
-                                <Phone className="w-3.5 h-3.5" />
+                        {/* Compact Contact Strip */}
+                        <div className="rounded-xl bg-slate-50/80 border border-slate-200/70 p-2 sm:p-2.5 space-y-1.5">
+                          {/* Direct Phone & Email in a clean grid */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                            {/* Phone */}
+                            <div className="flex items-center justify-between gap-1.5 min-w-0 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200/60 shadow-2xs">
+                              <div className="flex items-center gap-1.5 truncate min-w-0 flex-1">
+                                <Phone className="w-3 h-3 text-amber-600 shrink-0" />
+                                {phone ? (
+                                  <a href={`tel:${phone}`} className="font-mono font-bold text-slate-800 hover:text-emerald-700 truncate text-[11px]">
+                                    {phone}
+                                  </a>
+                                ) : (
+                                  <span className="text-slate-400 italic text-[11px]">No phone</span>
+                                )}
                               </div>
-                              {phone ? (
-                                <a href={`tel:${phone}`} className="font-mono font-bold text-slate-800 hover:text-emerald-700 truncate">
-                                  {phone}
-                                </a>
-                              ) : (
-                                <span className="text-slate-400 italic">No phone listed</span>
+                              {phone && (
+                                <button
+                                  type="button"
+                                  onClick={() => copyPhone(phone, lead.id)}
+                                  className={`p-1 rounded text-slate-400 hover:text-slate-700 transition-colors shrink-0 ${
+                                    copiedPhone === lead.id ? 'text-emerald-600 font-bold' : ''
+                                  }`}
+                                  title="Copy Phone"
+                                >
+                                  {copiedPhone === lead.id ? (
+                                    <span className="text-[9px] font-bold text-emerald-600">Copied!</span>
+                                  ) : (
+                                    <Copy className="w-3 h-3" />
+                                  )}
+                                </button>
                               )}
                             </div>
-                            {phone && (
-                              <button
-                                type="button"
-                                onClick={() => copyPhone(phone, lead.id)}
-                                className={`px-2 py-1 rounded-md border text-[11px] font-semibold transition-all shrink-0 ${
-                                  copiedPhone === lead.id
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
-                                    : 'bg-white text-slate-600 hover:bg-slate-100 border-slate-200'
-                                }`}
-                              >
-                                {copiedPhone === lead.id ? 'Copied!' : 'Copy'}
-                              </button>
-                            )}
-                          </div>
 
-                          {/* Extracted Email */}
-                          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 truncate">
-                              <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200 shrink-0">
-                                <Mail className="w-3.5 h-3.5" />
+                            {/* Email */}
+                            <div className="flex items-center justify-between gap-1.5 min-w-0 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200/60 shadow-2xs">
+                              <div className="flex items-center gap-1.5 truncate min-w-0 flex-1">
+                                <Mail className="w-3 h-3 text-emerald-600 shrink-0" />
+                                {email ? (
+                                  <a href={`mailto:${email}`} className="font-mono font-bold text-slate-800 hover:text-emerald-700 truncate text-[11px]">
+                                    {email}
+                                  </a>
+                                ) : (
+                                  <span className="text-slate-400 italic text-[11px]">No email found</span>
+                                )}
                               </div>
-                              {email ? (
-                                <a href={`mailto:${email}`} className="font-mono font-bold text-slate-800 hover:text-emerald-700 truncate">
-                                  {email}
-                                </a>
-                              ) : (
-                                <span className="text-slate-400 italic">No email found</span>
+                              {email && (
+                                <button
+                                  type="button"
+                                  onClick={() => copyEmail(email, lead.id)}
+                                  className={`p-1 rounded text-slate-400 hover:text-slate-700 transition-colors shrink-0 ${
+                                    copiedEmail === lead.id ? 'text-emerald-600 font-bold' : ''
+                                  }`}
+                                  title="Copy Email"
+                                >
+                                  {copiedEmail === lead.id ? (
+                                    <span className="text-[9px] font-bold text-emerald-600">Copied!</span>
+                                  ) : (
+                                    <Copy className="w-3 h-3" />
+                                  )}
+                                </button>
                               )}
                             </div>
-                            {email && (
-                              <button
-                                type="button"
-                                onClick={() => copyEmail(email, lead.id)}
-                                className={`px-2 py-1 rounded-md border text-[11px] font-semibold transition-all shrink-0 ${
-                                  copiedEmail === lead.id
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
-                                    : 'bg-white text-slate-600 hover:bg-slate-100 border-slate-200'
-                                }`}
-                              >
-                                {copiedEmail === lead.id ? 'Copied!' : 'Copy'}
-                              </button>
-                            )}
                           </div>
-                        </div>
 
-                        {/* Address & Map */}
-                        {address && (
-                          <div className="pl-8.5 text-xs">
-                            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
-                              <div className="flex items-start gap-2 text-slate-700">
-                                <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
-                                <span className="leading-relaxed font-medium">{address}</span>
+                          {/* Address & Google Maps */}
+                          {address && (
+                            <div className="flex items-center justify-between gap-1.5 text-[11px] pt-0.5 px-0.5">
+                              <div className="flex items-center gap-1.5 min-w-0 flex-1 text-slate-600">
+                                <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                                <span className="truncate">{address}</span>
                               </div>
-                              <div className="flex items-center gap-2 pt-1">
+                              <div className="flex items-center gap-1 shrink-0">
                                 <a
                                   href={googleMapsUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 font-bold text-[11px] transition-all"
+                                  className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50/80 px-1.5 py-0.5 rounded border border-emerald-200/70"
+                                  title="Open in Google Maps"
                                 >
-                                  <MapPin className="w-3 h-3 text-emerald-600" />
-                                  <span>Open in Google Maps</span>
-                                  <ExternalLink className="w-2.5 h-2.5 text-emerald-600 opacity-70" />
+                                  <span>Maps</span>
+                                  <ExternalLink className="w-2.5 h-2.5" />
                                 </a>
                                 <button
                                   type="button"
                                   onClick={() => copyAddress(address, lead.id)}
-                                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border font-semibold text-[11px] transition-all ${
-                                    copiedAddress === lead.id
-                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
-                                      : 'bg-white text-slate-600 hover:bg-slate-100 border-slate-200'
-                                  }`}
+                                  className="p-1 rounded text-slate-400 hover:text-slate-700 transition-colors"
+                                  title="Copy Address"
                                 >
-                                  {copiedAddress === lead.id ? 'Copied!' : 'Copy Address'}
+                                  {copiedAddress === lead.id ? (
+                                    <span className="text-[9px] font-bold text-emerald-600">Copied!</span>
+                                  ) : (
+                                    <Copy className="w-2.5 h-2.5" />
+                                  )}
                                 </button>
                               </div>
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
 
-                        {/* Dedicated Mobile Email Preview Action */}
-                        <div className="pl-8.5 pt-0.5">
+                        {/* Action Footer: Preview Email on Left, Socials + Delete on Right (Single Line!) */}
+                        <div className="flex items-center justify-between gap-2 pt-0.5">
+                          {/* Preview Email Button */}
                           {email ? (
                             <button
                               type="button"
                               onClick={() => setSelectedEmailLead(lead)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs shadow-2xs transition-all cursor-pointer group active:scale-95"
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs shadow-2xs transition-all cursor-pointer group active:scale-95"
                             >
                               <Eye className="w-3.5 h-3.5 text-emerald-600" />
                               <span>Preview Email</span>
@@ -1658,28 +1681,25 @@ export default function CampaignDetailPage({
                             <button
                               type="button"
                               disabled
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100/70 text-slate-400 border border-slate-200 font-medium text-xs cursor-not-allowed opacity-60"
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-100/70 text-slate-400 border border-slate-200 font-medium text-xs cursor-not-allowed opacity-60"
                               title="Preview unavailable (no email extracted for this lead)"
                             >
                               <Eye className="w-3.5 h-3.5 text-slate-300" />
                               <span>Preview Email</span>
                             </button>
                           )}
-                        </div>
 
-                        {/* Multi-Channel Socials & Delete Action */}
-                        <div className="pl-8.5 pt-1 flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] font-semibold text-slate-400 mr-1">Channels:</span>
+                          {/* Social Icons & Delete Lead */}
+                          <div className="flex items-center gap-1">
                             {socials.website ? (
                               <a
                                 href={socials.website.startsWith('http') ? socials.website : `https://${socials.website}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center transition-all shadow-2xs"
+                                className="w-7 h-7 rounded-lg bg-slate-50 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 border border-slate-200/80 flex items-center justify-center transition-all shadow-2xs"
                                 title={`Website: ${socials.website}`}
                               >
-                                <Globe className="w-4 h-4" />
+                                <Globe className="w-3.5 h-3.5" />
                               </a>
                             ) : null}
 
@@ -1688,10 +1708,10 @@ export default function CampaignDetailPage({
                                 href={socials.linkedin}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="w-8 h-8 rounded-lg bg-[#0077b5]/10 text-[#0077b5] border border-[#0077b5]/30 flex items-center justify-center transition-all shadow-2xs"
+                                className="w-7 h-7 rounded-lg bg-[#0077b5]/10 text-[#0077b5] border border-[#0077b5]/30 flex items-center justify-center transition-all shadow-2xs"
                                 title="LinkedIn"
                               >
-                                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.88a1.62 1.62 0 1 0 0 3.24 1.62 1.62 0 0 0 0-3.24Z"/></svg>
+                                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.88a1.62 1.62 0 1 0 0 3.24 1.62 1.62 0 0 0 0-3.24Z"/></svg>
                               </a>
                             ) : null}
 
@@ -1700,10 +1720,10 @@ export default function CampaignDetailPage({
                                 href={socials.instagram}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-500/10 via-rose-500/10 to-purple-500/10 text-[#e4405f] border border-rose-200 flex items-center justify-center transition-all shadow-2xs"
+                                className="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center transition-all shadow-2xs"
                                 title="Instagram"
                               >
-                                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069ZM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0Zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324ZM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881Z"/></svg>
+                                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069ZM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0Zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324ZM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881Z"/></svg>
                               </a>
                             ) : null}
 
@@ -1712,22 +1732,22 @@ export default function CampaignDetailPage({
                                 href={socials.facebook}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="w-8 h-8 rounded-lg bg-[#1877f2]/10 text-[#1877f2] border border-[#1877f2]/30 flex items-center justify-center transition-all shadow-2xs"
+                                className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center transition-all shadow-2xs"
                                 title="Facebook"
                               >
-                                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073Z"/></svg>
+                                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073Z"/></svg>
                               </a>
                             ) : null}
-                          </div>
 
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteLead(lead.id)}
-                            className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                            title="Delete Lead"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteLead(lead.id)}
+                              className="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors shrink-0 ml-0.5"
+                              title="Delete Lead"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );

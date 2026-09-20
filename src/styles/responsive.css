@@ -6,9 +6,9 @@
 .workspace-fluid-layout {
   width: 100% !important;
   max-width: 100% !important;
-  padding-left: 1rem;
-  padding-right: 1rem;
-  padding-top: 1.25rem;
+  padding-left: 0.875rem;
+  padding-right: 0.875rem;
+  padding-top: 1rem;
   padding-bottom: 2rem;
   margin-left: 0 !important;
   margin-right: 0 !important;
@@ -37,7 +37,57 @@
   }
 }
 
-/* 2. Zero Horizontal Scroll Enforcer on Desktop */
+/* 2. Header & Action Button Mobile System (Zero Awkward Text Wrapping) */
+.mobile-btn-nowrap {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+.mobile-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+@media (max-width: 639px) {
+  .mobile-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    flex-shrink: 0;
+  }
+
+  .mobile-header-actions button,
+  .mobile-header-actions a {
+    white-space: nowrap !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    padding-top: 0.375rem !important;
+    padding-bottom: 0.375rem !important;
+    font-size: 0.75rem !important;
+  }
+}
+
+/* 3. Responsive Page Footer & Back Navigation */
+.responsive-footer-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .responsive-footer-bar {
+    flex-direction: row;
+    text-align: left;
+  }
+}
+
+/* 4. Desktop Zero Horizontal Scroll Enforcer */
 @media (min-width: 1024px) {
   .responsive-table-container {
     width: 100%;
@@ -50,14 +100,20 @@
   }
 }
 
-/* 3. Mobile & Tablet Lead Cards System (No horizontal scrolling on small screens) */
+/* 5. Mobile & Tablet Lead Cards System (No horizontal scrolling on small screens) */
 .mobile-lead-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 1rem;
-  padding: 1rem;
+  padding: 0.875rem;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
   transition: all 0.2s ease;
+}
+
+@media (min-width: 640px) {
+  .mobile-lead-card {
+    padding: 1.25rem;
+  }
 }
 
 .mobile-lead-card:hover {
@@ -65,14 +121,14 @@
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
 }
 
-/* 4. Fluid Data Elements */
+/* 6. Fluid Data Elements & Text Truncation */
 .fluid-truncate {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* 5. Clean Action Pill Buttons */
+/* 7. Clean Action Pill Buttons */
 .action-pill-btn {
   display: inline-flex;
   align-items: center;
@@ -84,9 +140,34 @@
   transition: all 0.15s ease;
 }
 
-/* 6. Touch-Friendly Interactive Controls for Mobile */
+/* 8. Touch-Friendly Interactive Controls for Mobile (<1024px) */
 @media (max-width: 1023px) {
   .touch-target {
-    min-height: 38px;
+    min-height: 42px;
+  }
+
+  /* Responsive Horizontal Scrollable Tabs */
+  .mobile-scroll-tabs {
+    display: flex;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+  }
+  .mobile-scroll-tabs::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+  }
+}
+
+/* 9. Mobile Modal Optimization */
+@media (max-width: 639px) {
+  .responsive-modal-container {
+    padding: 0.75rem !important;
+  }
+  .responsive-modal-content {
+    max-height: 92vh !important;
+    width: 100% !important;
+    margin: auto 0 !important;
+    border-radius: 1.25rem !important;
   }
 }

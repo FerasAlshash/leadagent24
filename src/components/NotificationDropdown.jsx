@@ -95,118 +95,122 @@ export default function NotificationDropdown({
 
       {/* 2. Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2.5 w-[340px] sm:w-[400px] bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
-          {/* Top Bar: Title & Actions */}
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
-                <Bell className="w-3.5 h-3.5" />
+        <>
+          {/* Mobile dismissal backdrop */}
+          <div 
+            className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-xs sm:hidden" 
+            onClick={() => setIsOpen(false)} 
+          />
+          <div className="fixed left-3 right-3 top-[68px] sm:top-auto sm:left-auto sm:right-0 sm:absolute sm:mt-2.5 sm:w-[400px] bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150 max-h-[80vh] flex flex-col">
+            {/* Top Bar: Title & Actions */}
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
+                  <Bell className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 leading-none">Notifications</h3>
+                  <span className="text-[10px] text-slate-500 font-medium">
+                    {unreadCount > 0 ? `${unreadCount} unread update${unreadCount > 1 ? 's' : ''}` : 'All caught up'}
+                  </span>
+                </div>
               </div>
-              <div>
-                <h3 className="text-xs font-bold text-slate-900 leading-none">Notifications</h3>
-                <span className="text-[10px] text-slate-500 font-medium">
-                  {unreadCount > 0 ? `${unreadCount} unread update${unreadCount > 1 ? 's' : ''}` : 'All caught up'}
+
+              <div className="flex items-center gap-1">
+                {unreadCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={onMarkAllAsRead}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
+                    title="Mark all as read"
+                  >
+                    <CheckCheck className="w-3 h-3" />
+                    <span>Mark read</span>
+                  </button>
+                )}
+                {notifications.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={onClearAll}
+                    className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                    title="Clear all notifications"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Notifications List */}
+            <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100">
+              {notifications.length === 0 ? (
+                <div className="py-12 px-4 text-center">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2.5">
+                    <Bell className="w-5 h-5" />
+                  </div>
+                  <p className="text-xs font-bold text-slate-700">No Notifications</p>
+                  <p className="text-[11px] text-slate-400 mt-1 max-w-[200px] mx-auto">
+                    You're all caught up! New campaign updates and lead alerts will appear here.
+                  </p>
+                </div>
+              ) : (
+                notifications.map((n) => (
+                  <div
+                    key={n.id}
+                    onClick={() => {
+                      onNotificationClick?.(n);
+                      setIsOpen(false);
+                    }}
+                    className={`p-3.5 hover:bg-slate-50/90 transition-colors cursor-pointer flex items-start gap-3 relative ${
+                      !n.read ? 'bg-emerald-50/30' : ''
+                    }`}
+                  >
+                    {/* Unread indicator dot */}
+                    {!n.read && (
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 mt-1.5 ring-2 ring-emerald-100" />
+                    )}
+
+                    {/* Icon Pill */}
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${getBadgeColorForType(n.type)}`}>
+                      {getIconForType(n.type)}
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className={`text-xs truncate ${!n.read ? 'font-black text-slate-900' : 'font-semibold text-slate-700'}`}>
+                          {n.title}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">
+                        {n.message}
+                      </p>
+                      <div className="flex items-center justify-between gap-2 mt-1.5">
+                        <span className="text-[10px] text-slate-400 flex items-center gap-1 font-medium">
+                          <Clock className="w-3 h-3 text-slate-300" />
+                          {n.time}
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5 hover:underline">
+                          <span>View</span>
+                          <ChevronRight className="w-3 h-3" />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Footer note */}
+            {notifications.length > 0 && (
+              <div className="p-2.5 bg-slate-50 border-t border-slate-100 text-center">
+                <span className="text-[10px] text-slate-400 font-medium">
+                  Click any notification to navigate directly to its workspace
                 </span>
               </div>
-            </div>
-
-            <div className="flex items-center gap-1">
-              {unreadCount > 0 && (
-                <button
-                  type="button"
-                  onClick={onMarkAllAsRead}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
-                  title="Mark all as read"
-                >
-                  <CheckCheck className="w-3 h-3" />
-                  <span>Mark read</span>
-                </button>
-              )}
-              {notifications.length > 0 && (
-                <button
-                  type="button"
-                  onClick={onClearAll}
-                  className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                  title="Clear all notifications"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Notifications List */}
-          <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100">
-            {notifications.length === 0 ? (
-              <div className="py-10 px-4 text-center">
-                <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2.5">
-                  <Bell className="w-5 h-5 opacity-40" />
-                </div>
-                <h4 className="text-xs font-bold text-slate-800">No notifications yet</h4>
-                <p className="text-[11px] text-slate-400 mt-0.5 max-w-xs mx-auto">
-                  Updates on campaign prospecting, verified contacts, and outreach results will appear here.
-                </p>
-              </div>
-            ) : (
-              notifications.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => {
-                    onNotificationClick(item);
-                    setIsOpen(false);
-                  }}
-                  className={`p-3.5 flex items-start gap-3 cursor-pointer transition-all ${
-                    item.read 
-                      ? 'bg-white hover:bg-slate-50/80 text-slate-600' 
-                      : 'bg-emerald-50/30 hover:bg-emerald-50/60 text-slate-900'
-                  }`}
-                >
-                  {/* Icon Indicator */}
-                  <div className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 mt-0.5 ${getBadgeColorForType(item.type)}`}>
-                    {getIconForType(item.type)}
-                  </div>
-
-                  {/* Body Text */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-1">
-                      <h4 className={`text-xs leading-snug truncate ${item.read ? 'font-semibold text-slate-800' : 'font-bold text-slate-950'}`}>
-                        {item.title}
-                      </h4>
-                      {!item.read && (
-                        <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0 mt-1" />
-                      )}
-                    </div>
-
-                    <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">
-                      {item.message}
-                    </p>
-
-                    <div className="flex items-center justify-between mt-1.5 pt-0.5">
-                      <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
-                        <Clock className="w-2.5 h-2.5" />
-                        <span>{item.time || 'Just now'}</span>
-                      </div>
-
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 opacity-80 group-hover:opacity-100">
-                        <span>View</span>
-                        <ChevronRight className="w-2.5 h-2.5" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))
             )}
           </div>
-
-          {/* Footer note */}
-          {notifications.length > 0 && (
-            <div className="p-2.5 bg-slate-50 border-t border-slate-100 text-center">
-              <span className="text-[10px] text-slate-400 font-medium">
-                Click any notification to navigate directly to its workspace
-              </span>
-            </div>
-          )}
-        </div>
+        </>
       )}
     </div>
   );
