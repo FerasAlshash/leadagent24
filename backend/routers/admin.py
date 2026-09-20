@@ -68,41 +68,163 @@ class WebhookUpdateRequest(BaseModel):
     test_url: str
     production_url: str
     dispatch_callback_url: Optional[str] = None
+    restricted_prospecting: Optional[bool] = None
+    authorized_prospecting_emails: Optional[List[Any]] = None
+
+class AccessControlUpdateRequest(BaseModel):
+    restricted_prospecting: bool
+    authorized_prospecting_emails: List[Any] = []
 
 class PingWebhookRequest(BaseModel):
     target_url: Optional[str] = None
 
+def get_enriched_authorized_users() -> List[Dict[str, Any]]:
+    """
+    Enriches authorized prospecting emails with live account status from Supabase Auth.
+    Identifies whether each account is registered, their registration date, and their access grant date.
+    """
+    webhook_cfg = get_webhook_config()
+    raw_authorized = webhook_cfg.get("authorized_prospecting_emails", [])
+    
+    users_by_email = {}
+    try:
+        users_list = supabase_admin.auth.admin.list_users()
+        for u in users_list:
+            em = getattr(u, "email", None)
+            if em:
+                users_by_email[em.strip().lower()] = {
+                    "id": getattr(u, "id", None),
+                    "created_at": getattr(u, "created_at", None),
+                    "last_sign_in_at": getattr(u, "last_sign_in_at", None)
+                }
+    except Exception as e:
+        print(f"[Warning] Failed to list auth users in get_enriched_authorized_users: {e}")
+
+    enriched = []
+    seen = set()
+
+    # 1. Super Admin (ferasalshash@gmail.com) always first
+    admin_email = "ferasalshash@gmail.com"
+    admin_auth = users_by_email.get(admin_email)
+    admin_created_at = None
+    if admin_auth and admin_auth.get("created_at"):
+        admin_created_at = str(admin_auth["created_at"])
+
+    enriched.append({
+        "email": admin_email,
+        "role": "Primary Admin",
+        "is_admin": True,
+        "is_registered": bool(admin_auth),
+        "user_id": admin_auth.get("id") if admin_auth else None,
+        "registered_at": admin_created_at,
+        "granted_at": "Permanent"
+    })
+    seen.add(admin_email)
+
+    # 2. Add each authorized guest email
+    for item in raw_authorized:
+        em = None
+        gr_at = None
+        if isinstance(item, dict):
+            em = item.get("email")
+            gr_at = item.get("granted_at")
+        elif isinstance(item, str):
+            em = item
+
+        if not em or "@" not in em:
+            continue
+
+        em_clean = em.strip().lower()
+        if em_clean in seen:
+            continue
+        seen.add(em_clean)
+
+        user_auth = users_by_email.get(em_clean)
+        reg_at = None
+        if user_auth and user_auth.get("created_at"):
+            reg_at = str(user_auth["created_at"])
+
+        enriched.append({
+            "email": em_clean,
+            "role": "Authorized Guest",
+            "is_admin": False,
+            "is_registered": bool(user_auth),
+            "user_id": user_auth.get("id") if user_auth else None,
+            "registered_at": reg_at,
+            "granted_at": gr_at
+        })
+
+    return enriched
+
 @router.get("/webhook")
 def get_admin_webhook(admin: Dict[str, Any] = Depends(verify_admin)):
     """
-    Returns current webhook configuration: mode (test vs production), URLs, active URL, and dispatch callback URL.
+    Returns current webhook configuration: mode (test vs production), URLs, active URL, dispatch callback URL,
+    and access control settings (restricted_prospecting, authorized_prospecting_emails, authorized_users).
     """
+    cfg = get_webhook_config()
     return {
         "success": True,
-        "config": get_webhook_config()
+        "config": {
+            **cfg,
+            "authorized_users": get_enriched_authorized_users()
+        }
     }
 
 @router.post("/webhook")
 def update_admin_webhook(req: WebhookUpdateRequest, admin: Dict[str, Any] = Depends(verify_admin)):
     """
-    Updates the active webhook mode, URLs, and dispatch callback URL.
+    Updates the active webhook mode, URLs, dispatch callback URL, and optionally access control settings.
     """
     try:
         updated = set_webhook_config(
             mode=req.mode,
             test_url=req.test_url,
             production_url=req.production_url,
-            dispatch_callback_url=req.dispatch_callback_url
+            dispatch_callback_url=req.dispatch_callback_url,
+            restricted_prospecting=req.restricted_prospecting,
+            authorized_prospecting_emails=req.authorized_prospecting_emails
         )
         return {
             "success": True,
-            "message": f"Webhook switched to {updated['mode'].upper()} mode successfully.",
-            "config": updated
+            "message": f"Configuration updated successfully in {updated['mode'].upper()} mode.",
+            "config": {
+                **updated,
+                "authorized_users": get_enriched_authorized_users()
+            }
         }
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update webhook config: {str(e)}")
+
+@router.post("/access-control")
+def update_access_control(req: AccessControlUpdateRequest, admin: Dict[str, Any] = Depends(verify_admin)):
+    """
+    Dedicated endpoint to toggle Restricted Live Prospecting and update the list of authorized emails.
+    """
+    try:
+        current = get_webhook_config()
+        updated = set_webhook_config(
+            mode=current["mode"],
+            test_url=current["test_url"],
+            production_url=current["production_url"],
+            dispatch_callback_url=current.get("dispatch_callback_url"),
+            restricted_prospecting=req.restricted_prospecting,
+            authorized_prospecting_emails=req.authorized_prospecting_emails
+        )
+        enriched_users = get_enriched_authorized_users()
+        status_label = "Restricted (Admin & Whitelist only)" if updated["restricted_prospecting"] else "Open (Public)"
+        return {
+            "success": True,
+            "message": f"Live prospecting access updated to: {status_label}",
+            "config": {
+                **updated,
+                "authorized_users": enriched_users
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update access control: {str(e)}")
 
 @router.get("/status")
 async def get_admin_system_status(admin: Dict[str, Any] = Depends(verify_admin)):
@@ -153,7 +275,14 @@ async def get_admin_system_status(admin: Dict[str, Any] = Depends(verify_admin))
             "mode": webhook_cfg["mode"],
             "test_url": webhook_cfg["test_url"],
             "production_url": webhook_cfg["production_url"],
-            "dispatch_callback_url": webhook_cfg.get("dispatch_callback_url", "http://127.0.0.1:8000/api/campaigns/dispatch-email")
+            "dispatch_callback_url": webhook_cfg.get("dispatch_callback_url", "http://127.0.0.1:8000/api/campaigns/dispatch-email"),
+            "restricted_prospecting": webhook_cfg.get("restricted_prospecting", False),
+            "authorized_prospecting_emails": webhook_cfg.get("authorized_prospecting_emails", [])
+        },
+        "access_control": {
+            "restricted_prospecting": webhook_cfg.get("restricted_prospecting", False),
+            "authorized_prospecting_emails": webhook_cfg.get("authorized_prospecting_emails", []),
+            "authorized_users": get_enriched_authorized_users()
         },
         "recent_campaigns": all_campaigns[:8],
         "recent_leads": all_leads[:10]

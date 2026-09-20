@@ -21,6 +21,7 @@ A modern, full-stack B2B SaaS platform that automates the entire outbound sales 
 - **Geospatial & B2B Lead Scraper:** Target businesses by industry, location, and volume using high-speed crawlers.
 - **Deep Contact Enrichment:** Scrapes corporate websites to extract primary business email addresses, direct phone numbers, and official social media handles.
 - **AI Data Extraction & Verification:** Evaluates discovered emails and prioritizes departmental inboxes (`info@`, `contact@`, `sales@`) over generic noise.
+- **Live Prospecting Access Control & Demo Mode:** Built-in SaaS safeguard protecting live pipeline capacity. Unwhitelisted accounts explore features safely in Demo Mode, while administrators grant live search access via the executive Admin Console.
 - **Per-Campaign Outbound Email Infrastructure (BYOK Vault):** Connect Resend, Brevo, SendGrid, or Custom SMTP per campaign. API keys are stored securely with live connection diagnostics, test email sending, and domain SPF/DKIM verification assistance.
 - **Pre-flight Outbound Launch Protection:** Prevents triggering search or prospecting until outbound email credentials and sender identity are verified and configured.
 - **Real-Time Prospecting Milestone Tracker:** Live tracking modal monitoring the 4 key discovery stages (Scraping, Contact Enrichment, AI Email Pitch Generation, Lead Registration) backed by resilient database polling and background minimization.
@@ -46,12 +47,13 @@ A modern, full-stack B2B SaaS platform that automates the entire outbound sales 
    (Port 8000 REST API)                         (Webhook: lead-machine)
    ├── Auth & Vault Creds                                │
    ├── Outbound Integrations                             ▼
-   └── Campaigns & Leads                         [ Apify Cloud API ]
-             │                               (compass~crawler-google-places)
+   ├── Whitelist & Access Control                [ Apify Cloud API ]
+   └── Campaigns & Leads                         (compass~crawler-google-places)
              │                                           │
-             ▼                                           ▼
-   [ Supabase PostgreSQL ] ◄────────────── [ Outbound Email Providers ]
-  (Auth, Vault, Realtime DB)               (Resend, Brevo, SendGrid, SMTP)
+             │                                           ▼
+             ▼                                 [ Outbound Email Providers ]
+   [ Supabase PostgreSQL ] ◄────────────── (Resend, Brevo, SendGrid, SMTP)
+  (Auth, Vault, Realtime DB)
 ```
 
 ---
@@ -61,15 +63,20 @@ A modern, full-stack B2B SaaS platform that automates the entire outbound sales 
 ```text
 automate-lead-generation/
 ├── backend/                   # FastAPI application
-│   ├── routers/               # API endpoints (leads, campaigns, email_integrations, auth, admin)
-│   │   ├── email_integrations.py # BYOK email providers, vault credentials & live testing
+│   ├── routers/               # API endpoints
+│   │   ├── admin.py           # Admin console, system health & whitelist management
+│   │   ├── auth.py            # Authentication verification
 │   │   ├── campaigns.py       # Campaign management & launch dispatch
-│   │   ├── leads.py           # Lead enrichment & verification
-│   │   ├── webhook.py         # n8n webhook receiver & callbacks
-│   │   └── admin.py           # Admin health diagnostics & audit logs
-│   ├── schema_campaign_email_integrations.sql # SQL migration for vault & integrations
+│   │   ├── email_integrations.py # BYOK email providers, vault credentials & live testing
+│   │   └── leads.py           # Lead enrichment & verification
+│   ├── services/
+│   │   └── email_dispatcher.py # Outbound email delivery (Resend, Brevo, SendGrid, SMTP)
+│   ├── schema_init.sql        # Complete unified SQL schema setup (turnkey database deployment)
+│   ├── schema_authorized_users.sql # Access control & whitelisted users schema
+│   ├── schema_email_credentials.sql # Credentials vault schema
 │   ├── config.py              # Environment configuration & settings
 │   ├── database.py            # Supabase client integration
+│   ├── webhook_manager.py     # n8n webhook management & access control sync
 │   ├── main.py                # Application entrypoint & CORS middleware
 │   ├── requirements.txt       # Python dependencies
 │   └── .env.example           # Backend environment template
@@ -79,14 +86,16 @@ automate-lead-generation/
 ├── public/                    # Static assets & icons
 ├── src/                       # React frontend source code
 │   ├── assets/                # Images & SVGs
-│   ├── components/            # UI components (CampaignModal, ProspectingProgressModal, tables)
+│   ├── components/            # UI components (CampaignModal, ProspectingProgressModal, DemoAccessModal)
 │   ├── context/               # Authentication & global application state
 │   ├── data/                  # Static constants & unified email tones (emailTones.js)
 │   ├── lib/                   # Supabase client setup
-│   ├── pages/                 # Route pages (Dashboard, Campaigns, CampaignSettings, Audit Log)
+│   ├── pages/                 # Route pages (Dashboard, Campaigns, AdminConsole, Audit Log)
 │   └── utils/                 # Validation & string parsers
 ├── .env.example               # Frontend environment template
 ├── .gitignore                 # Protected secrets & artifact exclusion rules
+├── docker-compose.yml         # Containerized production stack
+├── Dockerfile.frontend        # Production React Nginx container
 ├── package.json               # Node.js dependencies & scripts
 ├── tailwind.config.js         # Design system & color tokens
 └── vite.config.js             # Build & bundler configuration
@@ -104,8 +113,21 @@ automate-lead-generation/
 ---
 
 ### 1. Database Schema Setup
-Run the SQL migration script in your **Supabase SQL Editor** to initialize the Vault and Campaign Integrations tables:
-- Execute `backend/schema_campaign_email_integrations.sql`
+
+Deploy all database tables, Row Level Security (RLS) policies, and performance indexes in your **Supabase SQL Editor** in a single step:
+
+1. Open your Supabase Dashboard: **SQL Editor** -> **New Query**.
+2. Copy and paste the contents of **`backend/schema_init.sql`**.
+3. Click **Run**.
+
+This initializes the following tables:
+- `profiles`: User account metadata and role classification.
+- `campaigns`: Multi-campaign workspaces, target criteria, and outbound settings.
+- `leads`: Verified business leads, enriched contact details, and outbound dispatch records.
+- `user_email_credentials`: Secure BYOK credentials vault (Resend, Brevo, SendGrid, SMTP).
+- `campaign_email_integrations`: Per-campaign outbound sender identities and dispatch configurations.
+- `system_settings`: Global platform settings and live prospecting access control flags.
+- `authorized_prospecting_users`: Whitelisted user accounts authorized for live search execution.
 
 ---
 
@@ -168,14 +190,15 @@ API documentation and Swagger UI will be available at `http://localhost:8000/doc
 ### 5. Workflow Engine (n8n) Setup
 1. Launch or self-host your n8n workflow engine instance.
 2. Configure a webhook node to listen on `/webhook/lead-machine`.
-3. Provide the webhook URL in `backend/.env` under `N8N_WEBHOOK_URL`.
+3. Ensure your Apify Google Places crawler node passes scraped lead data to the Supabase insert node with mapped `user_id` and `campaign_id`.
+4. Provide the webhook URL in `backend/.env` under `N8N_WEBHOOK_URL` (or configure via Admin Console).
 
 ---
 
 ## 📖 Deployment & Documentation
 
 - 🚀 **[VPS Deployment Guide](docs/vps_deployment_guide.md):** Complete walkthrough for deploying on Ubuntu using Docker Compose, Nginx reverse proxy, and Let's Encrypt SSL.
-- 📋 **[Project Overview & Roadmap](docs/project_overview_and_roadmap.md):** Architectural specifications, feature breakdown, and upcoming expansion milestones (SendGrid, SES, Mailgun, and custom domain email rotation).
+- 📋 **[Project Overview & Roadmap](docs/project_overview_and_roadmap.md):** Architectural specifications, feature breakdown, and upcoming expansion milestones.
 
 ---
 

@@ -9,14 +9,23 @@ services:
       - "8008:8000"
     environment:
       - PORT=8000
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL}
     env_file:
       - path: backend/.env
+        required: false
+      - path: .env
         required: false
 
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      args:
+        - VITE_SUPABASE_URL=${VITE_SUPABASE_URL:-${SUPABASE_URL}}
+        - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY:-${SUPABASE_ANON_KEY}}
     container_name: leadagent-frontend
     restart: unless-stopped
     ports:

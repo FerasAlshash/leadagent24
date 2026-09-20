@@ -6,5 +6,12 @@ dist-ssr
 __pycache__
 *.pyc
 *.pyo
-.env.local
-.env.*.local
+.env
+.env.*
+backend/.env
+backend/.env.*
+backend/email_settings.json
+backend/webhook_settings.json
+*.zip
+deploy-nas/
+

@@ -79,7 +79,7 @@ class CampaignLaunchRequest(BaseModel):
     class Config:
         populate_by_name = True
 
-def verify_token(authorization: Optional[str]) -> str:
+def get_user_and_email_from_token(authorization: Optional[str]) -> tuple:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Authentication required.")
     token = authorization.replace("Bearer ", "").strip()
@@ -88,7 +88,7 @@ def verify_token(authorization: Optional[str]) -> str:
     try:
         user_res = supabase_client.auth.get_user(token)
         if user_res and user_res.user:
-            return user_res.user.id
+            return user_res.user.id, (user_res.user.email or "").lower()
     except Exception:
         pass
 
@@ -96,21 +96,26 @@ def verify_token(authorization: Optional[str]) -> str:
     try:
         admin_user_res = supabase_admin.auth.get_user(token)
         if admin_user_res and admin_user_res.user:
-            return admin_user_res.user.id
+            return admin_user_res.user.id, (admin_user_res.user.email or "").lower()
     except Exception:
         pass
 
-    # 3. Resilient fallback: Decode JWT directly (zero network dependency, resilient to temporary rate limits)
+    # 3. Resilient fallback: Decode JWT directly
     try:
         import jwt
         payload = jwt.decode(token, options={"verify_signature": False, "verify_exp": False})
         user_id = payload.get("sub")
+        email = (payload.get("email") or "").lower()
         if user_id:
-            return user_id
+            return user_id, email
     except Exception:
         pass
 
     raise HTTPException(status_code=401, detail="Authentication failed.")
+
+def verify_token(authorization: Optional[str]) -> str:
+    user_id, _ = get_user_and_email_from_token(authorization)
+    return user_id
 
 @router.post("")
 def create_campaign(req: CampaignCreateRequest, authorization: Optional[str] = Header(None)):
@@ -186,12 +191,20 @@ def update_campaign(campaign_id: str, req: CampaignCreateRequest, authorization:
 @router.post("/launch")
 async def launch_campaign(req: CampaignLaunchRequest, authorization: Optional[str] = Header(None)):
     """
-    1. Verify user authentication.
+    1. Verify user authentication and check prospecting authorization.
     2. Record or update campaign in Supabase `campaigns` table.
     3. Dispatch enriched payload with user_id and campaign_id to n8n Webhook.
     """
-    user_id = verify_token(authorization)
+    user_id, user_email = get_user_and_email_from_token(authorization)
     campaign_id = req.campaign_id
+
+    # Check Restricted Live Prospecting Access Control
+    from backend.webhook_manager import is_prospecting_authorized
+    if not is_prospecting_authorized(user_email):
+        raise HTTPException(
+            status_code=403,
+            detail="Demo Mode: Live search is currently available for authorized accounts only. You can explore all features freely, contact the administrator to request search access for your account, or run your own pipeline using our open-source GitHub repository!"
+        )
 
     # 0. Strict Pre-flight Check: Outbound delivery provider MUST be configured for this campaign
     if campaign_id:

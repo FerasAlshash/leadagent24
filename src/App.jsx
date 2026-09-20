@@ -638,18 +638,24 @@ export default function App() {
       await refreshAllData();
     } catch (err) {
       console.error('Error dispatching search:', err);
-      const errorNotif = {
-        id: `notif-${Date.now()}`,
-        type: 'system',
-        title: 'Prospecting Search Failed',
-        message: err.message || 'Could not complete the search request.',
-        time: 'Just now',
-        read: false,
-        target: {
-          tab: 'campaigns'
-        }
-      };
-      setNotifications(prev => [errorNotif, ...prev]);
+      const isDemo = err?.message && (
+        err.message.includes('Demo Mode') ||
+        err.message.includes('authorized accounts only')
+      );
+      if (!isDemo) {
+        const errorNotif = {
+          id: `notif-${Date.now()}`,
+          type: 'system',
+          title: 'Prospecting Search Failed',
+          message: err.message || 'Could not complete the search request.',
+          time: 'Just now',
+          read: false,
+          target: {
+            tab: 'campaigns'
+          }
+        };
+        setNotifications(prev => [errorNotif, ...prev]);
+      }
       throw err;
     } finally {
       setIsSearching(false);

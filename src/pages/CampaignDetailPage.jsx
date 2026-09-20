@@ -40,6 +40,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
 import ProspectingProgressModal from '../components/ProspectingProgressModal';
+import DemoAccessModal from '../components/DemoAccessModal';
 import SentEmailModal from '../components/SentEmailModal';
 import PageHeader from '../components/PageHeader';
 import { API_BASE_URL } from '../lib/api';
@@ -159,6 +160,7 @@ export default function CampaignDetailPage({
 
   // Live Prospecting Session State
   const [prospectingSession, setProspectingSession] = useState(null);
+  const [demoNoticeModal, setDemoNoticeModal] = useState({ isOpen: false, message: '' });
   const initialLeadsCountRef = useRef(0);
   const searchPollIntervalRef = useRef(null);
 
@@ -353,6 +355,10 @@ export default function CampaignDetailPage({
   );
 
   const handleLaunchSearchClick = () => {
+    if (prospectingSession?.isActive) {
+      setProspectingSession(prev => ({ ...prev, isMinimized: false }));
+      return;
+    }
     if (!isOutboundConfigured) {
       setIsOutboundRequiredModalOpen(true);
       return;
@@ -849,6 +855,13 @@ export default function CampaignDetailPage({
         onMinimize={() => setProspectingSession(prev => prev ? { ...prev, isMinimized: true } : null)}
         onRestore={() => setProspectingSession(prev => prev ? { ...prev, isMinimized: false } : null)}
         onClose={() => setProspectingSession(null)}
+      />
+
+      {/* Dedicated Demo Mode Restriction Modal */}
+      <DemoAccessModal
+        isOpen={demoNoticeModal.isOpen}
+        message={demoNoticeModal.message}
+        onClose={() => setDemoNoticeModal({ isOpen: false, message: '' })}
       />
 
       {/* 2. Independent Prospects & Leads Section Header */}
@@ -1812,7 +1825,7 @@ export default function CampaignDetailPage({
                 // 1. Immediately close the search configuration modal
                 setIsSearchModalOpen(false);
 
-                // 2. Immediately open the Live Prospecting Progress Modal!
+                // 2. Immediately open the Live Prospecting Progress Modal for instant feedback!
                 setProspectingSession({
                   isActive: true,
                   startTime: Date.now(),
@@ -1827,7 +1840,7 @@ export default function CampaignDetailPage({
                   errorMessage: null
                 });
 
-                // 3. Dispatch the search API call in background with error handling
+                // 3. Dispatch the search API call in background with Demo Mode protection
                 if (onLaunchSearch) {
                   onLaunchSearch({
                     campaign_id: campaign.id,
@@ -1839,21 +1852,37 @@ export default function CampaignDetailPage({
                     "Your Name": campaign.sender_name || 'Alex',
                     "Your Company/Agency Name": campaign.company_name || campaign.title,
                     "What does your company do?": campaign.company_pitch || ''
-                  }).catch(err => {
+                  })
+                  .catch(err => {
                     console.warn('Search dispatch background notice:', err);
-                    // Do NOT display error if leads are already found, session completed, or if it is already scraping in background
+                    const errMsg = err?.message || '';
+                    const isDemoRestricted = errMsg.includes('Demo Mode') || 
+                      errMsg.includes('authorized accounts only') ||
+                      errMsg.includes('403');
+
+                    if (isDemoRestricted) {
+                      // Instantly abort progress modal: no fake background stages or ticking!
+                      setProspectingSession(null);
+                      // Open dedicated independent Demo Access Modal
+                      setDemoNoticeModal({
+                        isOpen: true,
+                        message: errMsg
+                      });
+                      return;
+                    }
+
+                    // For non-demo errors, show notice inside progress modal only if not already scraping
                     setProspectingSession(prev => {
                       if (!prev || prev.isCompleted || (prev.newLeadsFound && prev.newLeadsFound > 0)) {
                         return prev;
                       }
-                      // If request took > 20s, n8n/Apify is actively processing leads in background
-                      if (Date.now() - prev.startTime > 20000) {
-                        return prev; // Keep waiting for database records
+                      if (Date.now() - (prev.startTime || 0) > 20000) {
+                        return prev;
                       }
                       return {
                         ...prev,
                         isError: true,
-                        errorMessage: 'The prospecting service is taking longer than usual to acknowledge. Your search is continuing in the background.'
+                        errorMessage: errMsg || 'The prospecting service is taking longer than usual to acknowledge. Your search is continuing in the background.'
                       };
                     });
                   });

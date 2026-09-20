@@ -231,25 +231,29 @@ async def list_user_credentials(authorization: Optional[str] = Header(None)):
     credentials_list = []
 
     # 1. Try Supabase
-    if user_id != "default":
-        try:
-            res = supabase_admin.table("user_email_credentials").select("*").eq("user_id", user_id).order("created_at").execute()
-            if res.data:
-                credentials_list = res.data
-        except Exception:
-            pass
+    try:
+        query = supabase_admin.table("user_email_credentials").select("*")
+        if user_id != "default":
+            query = query.eq("user_id", user_id)
+        res = query.order("created_at").execute()
+        if res and res.data:
+            credentials_list = res.data
+    except Exception:
+        pass
 
     # 2. Fallback to local vault
     if not credentials_list:
         credentials_list = read_local_credentials(user_id)
 
     # Mask secrets
+    # Mask secrets and ensure raw api_key is never exposed in response
     sanitized = []
     for c in credentials_list:
         item = dict(c)
         raw_key = item.get("api_key") or ""
         item["api_key_masked"] = mask_secret_key(raw_key)
         item.pop("smtp_pass", None)
+        item.pop("api_key", None)
         sanitized.append(item)
 
     return {"success": True, "credentials": sanitized}
@@ -369,11 +373,13 @@ async def remove_user_credential(
 
     delete_local_credential(credential_id)
 
-    if user_id != "default":
-        try:
-            supabase_admin.table("user_email_credentials").delete().eq("id", credential_id).execute()
-        except Exception:
-            pass
+    try:
+        query = supabase_admin.table("user_email_credentials").delete().eq("id", credential_id)
+        if user_id != "default":
+            query = query.eq("user_id", user_id)
+        query.execute()
+    except Exception:
+        pass
 
     return {"success": True, "message": "Credential removed successfully."}
 
@@ -635,13 +641,15 @@ async def get_campaign_email_integration(
 
     # 1. Fetch available credentials for selection
     available_creds = []
-    if user_id != "default":
-        try:
-            res_creds = supabase_admin.table("user_email_credentials").select("*").eq("user_id", user_id).order("created_at").execute()
-            if res_creds.data:
-                available_creds = res_creds.data
-        except Exception:
-            pass
+    try:
+        query = supabase_admin.table("user_email_credentials").select("*")
+        if user_id != "default":
+            query = query.eq("user_id", user_id)
+        res_creds = query.order("created_at").execute()
+        if res_creds and res_creds.data:
+            available_creds = res_creds.data
+    except Exception:
+        pass
     if not available_creds:
         available_creds = read_local_credentials(user_id)
 
@@ -650,6 +658,7 @@ async def get_campaign_email_integration(
         item = dict(c)
         item["api_key_masked"] = mask_secret_key(item.get("api_key") or "")
         item.pop("smtp_pass", None)
+        item.pop("api_key", None)
         sanitized_creds.append(item)
 
     # 2. Fetch campaign's bound outbound config
@@ -668,6 +677,7 @@ async def get_campaign_email_integration(
         rec = dict(bound_record)
         rec["api_key_masked"] = mask_secret_key(rec.get("api_key") or "")
         rec.pop("smtp_pass", None)
+        rec.pop("api_key", None)
         return {
             "configured": True,
             "integration": rec,

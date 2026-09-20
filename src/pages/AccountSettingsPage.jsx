@@ -1196,7 +1196,7 @@ export default function AccountSettingsPage({ leadsCount = 0, campaignsCount = 0
                 <input
                   type="email"
                   required
-                  placeholder="e.g. partners@hireley.net or tamer@merotix.com"
+                  placeholder="e.g. outreach@yourcompany.com or sales@agency.com"
                   value={testSenderEmail}
                   onChange={(e) => setTestSenderEmail(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-emerald-500 font-medium"

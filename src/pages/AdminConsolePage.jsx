@@ -20,7 +20,12 @@ import {
   Zap,
   Radio,
   Sliders,
-  ExternalLink
+  ExternalLink,
+  Lock,
+  UserCheck,
+  Plus,
+  X,
+  ShieldAlert
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -54,6 +59,32 @@ export default function AdminConsolePage({
   const [pinging, setPinging] = useState(false);
   const [pingResult, setPingResult] = useState(null);
 
+  // Live Prospecting Access Control & Quota Protection State
+  const [restrictedProspecting, setRestrictedProspecting] = useState(false);
+  const [authorizedEmails, setAuthorizedEmails] = useState([]);
+  const [authorizedUsers, setAuthorizedUsers] = useState([]);
+  const [newEmailInput, setNewEmailInput] = useState('');
+  const [savingAccess, setSavingAccess] = useState(false);
+  const [accessSuccess, setAccessSuccess] = useState(false);
+
+  const formatDateTime = (isoString) => {
+    if (!isoString) return null;
+    if (isoString === 'Permanent') return 'Permanent';
+    try {
+      const d = new Date(isoString);
+      if (isNaN(d.getTime())) return isoString;
+      return d.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return isoString;
+    }
+  };
+
   const fetchAdminStatus = async () => {
     setLoading(true);
     setError(null);
@@ -79,6 +110,17 @@ export default function AdminConsolePage({
         if (result.webhook.test_url) setTestUrl(result.webhook.test_url);
         if (result.webhook.production_url) setProdUrl(result.webhook.production_url);
         if (result.webhook.dispatch_callback_url) setDispatchCallbackUrl(result.webhook.dispatch_callback_url);
+      }
+
+      // Populate access control settings
+      if (result?.access_control) {
+        setRestrictedProspecting(Boolean(result.access_control.restricted_prospecting));
+        setAuthorizedUsers(result.access_control.authorized_users || []);
+        setAuthorizedEmails(result.access_control.authorized_prospecting_emails || []);
+      } else if (result?.webhook) {
+        setRestrictedProspecting(Boolean(result.webhook.restricted_prospecting));
+        setAuthorizedUsers(result.webhook.authorized_users || []);
+        setAuthorizedEmails(result.webhook.authorized_prospecting_emails || []);
       }
     } catch (err) {
       setError(err.message);
@@ -135,6 +177,91 @@ export default function AdminConsolePage({
     } finally {
       setSavingWebhook(false);
     }
+  };
+
+  // Handle Access Control Save
+  const handleSaveAccessControl = async (restrictedVal, emailsVal) => {
+    setSavingAccess(true);
+    setAccessSuccess(false);
+    try {
+      const token = session?.access_token;
+      const res = await fetch(`${FASTAPI_URL}/api/admin/access-control`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          restricted_prospecting: Boolean(restrictedVal),
+          authorized_prospecting_emails: emailsVal || []
+        })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || 'Failed to update access control');
+      }
+
+      const result = await res.json();
+      setAccessSuccess(true);
+      setTimeout(() => setAccessSuccess(false), 2500);
+
+      if (result?.config?.authorized_users) {
+        setAuthorizedUsers(result.config.authorized_users);
+      } else {
+        await fetchAdminStatus();
+      }
+    } catch (err) {
+      alert('Error: ' + err.message);
+    } finally {
+      setSavingAccess(false);
+    }
+  };
+
+  const handleToggleRestricted = async (e) => {
+    const newVal = e.target.checked;
+    setRestrictedProspecting(newVal);
+    const currentList = authorizedUsers
+      .filter(u => !u.is_admin)
+      .map(u => ({ email: u.email, granted_at: u.granted_at || new Date().toISOString() }));
+    await handleSaveAccessControl(newVal, currentList);
+  };
+
+  const handleAddEmail = async (e) => {
+    e.preventDefault();
+    const clean = newEmailInput.trim().toLowerCase();
+    if (!clean || !clean.includes('@')) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+    const isAlready = authorizedUsers.some(u => u.email.toLowerCase() === clean);
+    if (isAlready || clean === (data?.admin_email || 'ferasalshash@gmail.com').toLowerCase()) {
+      alert('This email is already authorized.');
+      return;
+    }
+    const currentList = authorizedUsers
+      .filter(u => !u.is_admin)
+      .map(u => ({ email: u.email, granted_at: u.granted_at || new Date().toISOString() }));
+    const updatedList = [...currentList, { email: clean, granted_at: new Date().toISOString() }];
+
+    setNewEmailInput('');
+    await handleSaveAccessControl(restrictedProspecting, updatedList);
+  };
+
+  const handleRemoveEmail = async (emailToRemove) => {
+    const isConfirmed = await confirm({
+      title: 'Revoke Access',
+      message: `Are you sure you want to revoke live prospecting access for "${emailToRemove}"? They will no longer be able to run autonomous lead searches.`,
+      confirmText: 'Revoke Access',
+      variant: 'danger'
+    });
+    if (!isConfirmed) return;
+
+    const updatedList = authorizedUsers
+      .filter(u => !u.is_admin && u.email.toLowerCase() !== emailToRemove.toLowerCase())
+      .map(u => ({ email: u.email, granted_at: u.granted_at }));
+
+    await handleSaveAccessControl(restrictedProspecting, updatedList);
   };
 
   // Switch mode directly
@@ -679,6 +806,245 @@ export default function AdminConsolePage({
             </div>
           </div>
         )}
+      </div>
+
+      {/* ========================================================================= */}
+      {/* LIVE PROSPECTING QUOTA & ACCESS CONTROL (ADMIN GATEWAY & WHITELIST)       */}
+      {/* ========================================================================= */}
+      <div className="p-4 sm:p-8 rounded-2xl sm:rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-2xs border ${
+              restrictedProspecting 
+                ? 'bg-amber-50 border-amber-200 text-amber-700' 
+                : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+            }`}>
+              <Lock className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-slate-900">
+                  Live Prospecting Quota & Access Control
+                </h2>
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+                  restrictedProspecting
+                    ? 'bg-amber-100 text-amber-900 border border-amber-200'
+                    : 'bg-emerald-100 text-emerald-900 border border-emerald-200'
+                }`}>
+                  {restrictedProspecting ? '🔒 Restricted Mode Active' : '🌐 Open Mode (Public)'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Allow visitors to register and explore campaigns freely while restricting live search execution to preserve cloud quotas.
+              </p>
+            </div>
+          </div>
+
+          {/* Toggle Switch */}
+          <div className="flex items-center gap-3 bg-slate-50 px-4 py-2.5 rounded-2xl border border-slate-200 shrink-0">
+            <span className="text-xs font-bold text-slate-700">
+              {restrictedProspecting ? 'Restricted (Admin & Whitelist)' : 'Unrestricted (Open)'}
+            </span>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={restrictedProspecting}
+                onChange={handleToggleRestricted}
+                disabled={savingAccess}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+            </label>
+          </div>
+        </div>
+
+        {/* Informative Explanation Banner */}
+        <div className={`p-4 rounded-2xl border text-xs leading-relaxed space-y-2 ${
+          restrictedProspecting 
+            ? 'bg-amber-50/60 border-amber-200 text-amber-900' 
+            : 'bg-slate-50 border-slate-200 text-slate-600'
+        }`}>
+          <div className="flex items-center gap-2 font-bold text-sm">
+            {restrictedProspecting ? (
+              <>
+                <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>Protection Enabled: Live Searches Restricted</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Open Mode: Any registered user can run live searches</span>
+              </>
+            )}
+          </div>
+          <p>
+            {restrictedProspecting
+              ? "When Restricted Mode is enabled, only your administrator account and whitelisted emails below can click 'Launch Autonomous Sequence'. Visitors and unauthorized accounts can still register, browse the UI, and configure campaigns, but receive a polite Demo Mode notification if they attempt a live search."
+              : "When Open Mode is active, any registered user can launch live prospecting searches using your active webhook pipeline."}
+          </p>
+        </div>
+
+        {/* Whitelist Management Section */}
+        <div className="space-y-4 pt-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <UserCheck className="w-4 h-4 text-emerald-600" />
+                <span>Authorized Prospecting Whitelist</span>
+              </h3>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Add specific client or team emails to grant them full access to live prospecting runs.
+              </p>
+            </div>
+            {accessSuccess && (
+              <span className="text-xs font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                <span>Saved successfully!</span>
+              </span>
+            )}
+          </div>
+
+          {/* Add Email Input Form */}
+          <form onSubmit={handleAddEmail} className="flex gap-2 max-w-xl">
+            <input
+              type="email"
+              value={newEmailInput}
+              onChange={(e) => setNewEmailInput(e.target.value)}
+              placeholder="e.g. client@agency.com or partner@company.com"
+              className="flex-1 px-3.5 py-2.5 text-xs rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            />
+            <button
+              type="submit"
+              disabled={savingAccess || !newEmailInput.trim()}
+              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 disabled:opacity-50 cursor-pointer shadow-2xs"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Authorize Email</span>
+            </button>
+          </form>
+
+          {/* Executive Table for Authorized Prospecting Users */}
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xs mt-3">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    <th className="py-3 px-4">Authorized Account</th>
+                    <th className="py-3 px-4">Platform Status</th>
+                    <th className="py-3 px-4">Registered On</th>
+                    <th className="py-3 px-4">Access Granted</th>
+                    <th className="py-3 px-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {authorizedUsers.map((user) => (
+                    <tr 
+                      key={user.email} 
+                      className={`transition-colors ${user.is_admin ? 'bg-emerald-50/25 hover:bg-emerald-50/40' : 'hover:bg-slate-50/60'}`}
+                    >
+                      {/* 1. Account / Email */}
+                      <td className="py-3.5 px-4 min-w-[220px]">
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 border ${
+                            user.is_admin 
+                              ? 'bg-emerald-100 border-emerald-300 text-emerald-800' 
+                              : 'bg-slate-100 border-slate-200 text-slate-700'
+                          }`}>
+                            {user.is_admin ? '👑' : user.email.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="font-bold text-slate-900 block truncate max-w-[200px] sm:max-w-[260px]">
+                              {user.email}
+                            </span>
+                            <span className={`text-[10px] font-bold inline-block mt-0.5 ${
+                              user.is_admin ? 'text-emerald-700' : 'text-slate-500'
+                            }`}>
+                              {user.role || (user.is_admin ? 'Primary Admin' : 'Authorized Guest')}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* 2. Platform Status */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        {user.is_registered ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span>Registered (Active)</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                            <span>Pending Signup</span>
+                          </span>
+                        )}
+                      </td>
+
+                      {/* 3. Registered On */}
+                      <td className="py-3.5 px-4 whitespace-nowrap font-mono text-[11px] text-slate-600">
+                        {user.registered_at ? (
+                          formatDateTime(user.registered_at)
+                        ) : (
+                          <span className="text-slate-400 italic">Not registered yet</span>
+                        )}
+                      </td>
+
+                      {/* 4. Access Granted */}
+                      <td className="py-3.5 px-4 whitespace-nowrap text-[11px]">
+                        {user.is_admin ? (
+                          <span className="font-semibold text-emerald-700 flex items-center gap-1">
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Permanent</span>
+                          </span>
+                        ) : user.granted_at ? (
+                          <span className="font-mono text-slate-600">
+                            {formatDateTime(user.granted_at)}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">Standard</span>
+                        )}
+                      </td>
+
+                      {/* 5. Action / Delete */}
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        {user.is_admin ? (
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200">
+                            Protected
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveEmail(user.email)}
+                            disabled={savingAccess}
+                            className="px-2.5 py-1 rounded-lg text-rose-600 hover:text-white hover:bg-rose-600 border border-rose-200 hover:border-rose-600 text-xs font-bold transition-all inline-flex items-center gap-1 cursor-pointer shadow-2xs disabled:opacity-50"
+                            title={`Revoke prospecting access for ${user.email}`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Revoke</span>
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+
+                  {authorizedUsers.length === 0 && (
+                    <tr>
+                      <td colSpan="5" className="py-8 text-center text-slate-400 text-xs">
+                        No authorized users loaded.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Table Footer */}
+            <div className="p-3 bg-slate-50/60 border-t border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 text-[11px] text-slate-500">
+              <span>Total Authorized Accounts: <strong className="text-slate-800">{authorizedUsers.length}</strong></span>
+              <span className="text-slate-400">Accounts with "Pending Signup" automatically gain live search privileges immediately upon registering.</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* ========================================================================= */}
