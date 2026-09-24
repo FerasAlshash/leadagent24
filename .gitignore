@@ -74,6 +74,7 @@ desktop.ini
 # 7. AI Agents & Local Memory
 # ==========================================
 AGENTS.md
+LOCAL_PROJECT_BRAIN.md
 .agents/
 
 # ==========================================
