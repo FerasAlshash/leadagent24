@@ -199,6 +199,7 @@ API documentation and Swagger UI will be available at `http://localhost:8000/doc
 
 - 🚀 **[VPS Deployment Guide](docs/vps_deployment_guide.md):** Complete walkthrough for deploying on Ubuntu using Docker Compose, Nginx reverse proxy, and Let's Encrypt SSL.
 - 📋 **[Project Overview & Roadmap](docs/project_overview_and_roadmap.md):** Architectural specifications, feature breakdown, and upcoming expansion milestones.
+- 🤝 **[Contributing Guidelines](CONTRIBUTING.md):** Information on development workflow, code standards, and how to submit pull requests.
 
 ---
 
